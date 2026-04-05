@@ -1,0 +1,5 @@
+{
+  "name": "ARcricinfo",
+  "description": "A professional-grade cricket match management platform for creating matches, live scoring with ball-by-ball tracking, and analyzing match statistics with automated insights.",
+  "requestFramePermissions": []
+}
