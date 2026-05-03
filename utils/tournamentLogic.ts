@@ -89,37 +89,90 @@ export function processMatchResult(tournament: Tournament, completedMatch: Match
 
     // Update points table (League)
     if (t.format === 'LEAGUE') {
-        const updateEntry = (teamName: string, matchTeam: typeof completedMatch.teamA, oppTeam: typeof completedMatch.teamA) => {
-            const entry = t.pointsTable.find(e => e.teamName === teamName);
-            if (!entry) return;
-            entry.played += 1;
-            entry.runsFor += matchTeam.totalRuns;
-            entry.ballsFor += matchTeam.overs;
-            entry.runsAgainst += oppTeam.totalRuns;
-            entry.ballsAgainst += oppTeam.overs;
-            if (!completedMatch.winningTeamId) {
-                entry.tied += 1; entry.points += 1;
-            } else if (winnerName === teamName) {
-                entry.won += 1; entry.points += 2;
+        if (fixture.round === 1) {
+            const updateEntry = (teamName: string, matchTeam: typeof completedMatch.teamA, oppTeam: typeof completedMatch.teamA) => {
+                const entry = t.pointsTable.find(e => e.teamName === teamName);
+                if (!entry) return;
+                entry.played += 1;
+                entry.runsFor += matchTeam.totalRuns;
+                entry.ballsFor += matchTeam.overs;
+                entry.runsAgainst += oppTeam.totalRuns;
+                entry.ballsAgainst += oppTeam.overs;
+                if (!completedMatch.winningTeamId) {
+                    entry.tied += 1; entry.points += 1;
+                } else if (winnerName === teamName) {
+                    entry.won += 1; entry.points += 2;
+                } else {
+                    entry.lost += 1;
+                }
+                const oversFor = entry.ballsFor > 0 ? entry.ballsFor / 6 : 0.001;
+                const oversAgainst = entry.ballsAgainst > 0 ? entry.ballsAgainst / 6 : 0.001;
+                entry.nrr = parseFloat((entry.runsFor / oversFor - entry.runsAgainst / oversAgainst).toFixed(3));
+            };
+
+            updateEntry(completedMatch.teamA.name, completedMatch.teamA, completedMatch.teamB);
+            updateEntry(completedMatch.teamB.name, completedMatch.teamB, completedMatch.teamA);
+
+            // Sort: points desc, NRR desc
+            t.pointsTable.sort((a, b) => b.points - a.points || b.nrr - a.nrr);
+        }
+
+        // Playoff logic for LEAGUE
+        const leagueFixtures = t.fixtures.filter(f => f.round === 1);
+        const leagueDone = leagueFixtures.every(f => f.status === 'COMPLETED');
+        const hasPlayoffs = t.fixtures.some(f => f.round > 1);
+        const topTeams = t.pointsTable.map(e => e.teamName);
+
+        if (leagueDone && !hasPlayoffs) {
+            // Generate Playoff fixtures based on teams length
+            if (topTeams.length >= 4) {
+                // IPL Style
+                t.fixtures.push({ id: crypto.randomUUID(), round: 2, label: 'Qualifier 1', team1: topTeams[0], team2: topTeams[1], status: 'PENDING' });
+                t.fixtures.push({ id: crypto.randomUUID(), round: 2, label: 'Eliminator', team1: topTeams[2], team2: topTeams[3], status: 'PENDING' });
+                t.fixtures.push({ id: crypto.randomUUID(), round: 3, label: 'Qualifier 2', team1: 'Loser Q1', team2: 'Winner Eliminator', status: 'PENDING' });
+                t.fixtures.push({ id: crypto.randomUUID(), round: 4, label: 'Final', team1: 'Winner Q1', team2: 'Winner Q2', status: 'PENDING' });
+                t.currentRound = 2;
+            } else if (topTeams.length === 3) {
+                // 3 Teams
+                t.fixtures.push({ id: crypto.randomUUID(), round: 2, label: 'Eliminator', team1: topTeams[1], team2: topTeams[2], status: 'PENDING' });
+                t.fixtures.push({ id: crypto.randomUUID(), round: 3, label: 'Final', team1: topTeams[0], team2: 'Winner Eliminator', status: 'PENDING' });
+                t.currentRound = 2;
+            } else if (topTeams.length === 2) {
+                // 2 Teams
+                t.fixtures.push({ id: crypto.randomUUID(), round: 2, label: 'Final', team1: topTeams[0], team2: topTeams[1], status: 'PENDING' });
+                t.currentRound = 2;
             } else {
-                entry.lost += 1;
+                t.status = 'COMPLETED';
+                t.champion = topTeams[0];
             }
-            const oversFor = entry.ballsFor > 0 ? entry.ballsFor / 6 : 0.001;
-            const oversAgainst = entry.ballsAgainst > 0 ? entry.ballsAgainst / 6 : 0.001;
-            entry.nrr = parseFloat((entry.runsFor / oversFor - entry.runsAgainst / oversAgainst).toFixed(3));
-        };
+        } else if (hasPlayoffs && winnerName) {
+            // Progression for LEAGUE playoffs
+            if (fixture.label === 'Qualifier 1') {
+                const loser = completedMatch.winningTeamId === completedMatch.teamA.id ? completedMatch.teamB.name : completedMatch.teamA.name;
+                const q2 = t.fixtures.find(f => f.label === 'Qualifier 2');
+                if (q2) q2.team1 = loser;
+                const final = t.fixtures.find(f => f.label === 'Final');
+                if (final) final.team1 = winnerName;
+            } else if (fixture.label === 'Eliminator') {
+                if (topTeams.length >= 4) {
+                    const q2 = t.fixtures.find(f => f.label === 'Qualifier 2');
+                    if (q2) q2.team2 = winnerName;
+                } else if (topTeams.length === 3) {
+                    const final = t.fixtures.find(f => f.label === 'Final');
+                    if (final) final.team2 = winnerName;
+                }
+            } else if (fixture.label === 'Qualifier 2') {
+                const final = t.fixtures.find(f => f.label === 'Final');
+                if (final) final.team2 = winnerName;
+            } else if (fixture.label === 'Final') {
+                t.status = 'COMPLETED';
+                t.champion = winnerName;
+            }
 
-        updateEntry(completedMatch.teamA.name, completedMatch.teamA, completedMatch.teamB);
-        updateEntry(completedMatch.teamB.name, completedMatch.teamB, completedMatch.teamA);
-
-        // Sort: points desc, NRR desc
-        t.pointsTable.sort((a, b) => b.points - a.points || b.nrr - a.nrr);
-
-        // Check if all league fixtures done → declare champion
-        const allDone = t.fixtures.every(f => f.status === 'COMPLETED');
-        if (allDone) {
-            t.status = 'COMPLETED';
-            t.champion = t.pointsTable[0]?.teamName;
+            // Update currentRound based on pending fixtures
+            if (t.fixtures.some(f => f.round === 2 && f.status !== 'COMPLETED')) t.currentRound = 2;
+            else if (t.fixtures.some(f => f.round === 3 && f.status !== 'COMPLETED')) t.currentRound = 3;
+            else if (t.fixtures.some(f => f.round === 4 && f.status !== 'COMPLETED')) t.currentRound = 4;
         }
     }
 

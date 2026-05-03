@@ -14,14 +14,19 @@ import { TournamentView } from './components/TournamentView';
 import { ShareScorecard } from './components/ShareScorecard';
 import { PartnershipsView, computePartnerships } from './components/Partnerships';
 import { LiveScoreView } from './components/LiveScoreView';
+import { PublicProfileView } from './components/PublicProfileView';
+import { BroadcastOverlay } from './components/BroadcastOverlay';
 import { WagonWheel } from './components/WagonWheel';
+import { MatchAnalytics } from './components/MatchAnalytics';
 import { BallTimeline } from './components/BallTimeline';
 import { ToastProvider, useToast } from './components/Toast';
 import { determineManOfTheMatch } from './utils/cricketLogic';
 import { supabase } from './utils/supabase';
-import { loadProfile, saveProfile, loadMatches, saveMatch, deleteMatch, loadActiveSeries, loadCompletedSeries, saveSeries, syncPlayersFromMatches, loadAllPlayers, DBPlayer, saveTournament, loadTournaments, deleteTournament, pushLiveScore, removeLiveScore, loadTeams, saveTeam, deleteTeam } from './utils/db';
+import { loadProfile, saveProfile, loadMatches, saveMatch, deleteMatch, loadActiveSeries, loadCompletedSeries, saveSeries, syncPlayersFromMatches, loadAllPlayers, DBPlayer, saveTournament, loadTournaments, deleteTournament, pushLiveScore, removeLiveScore, loadTeams, saveTeam, deleteTeam, joinTeam } from './utils/db';
 import { processMatchResult } from './utils/tournamentLogic';
-import { History, Trophy, ChevronLeft, ChevronRight, Search, Menu, X, Users, Activity, User, LogIn, LogOut, Camera, Upload, Info, Mail, Layers, Star, PlayCircle, Flag, Filter, Calendar, Zap, Loader2, Trash2, Edit3, Target } from 'lucide-react';
+import { socket } from './utils/socket';
+import { NotificationsView } from './components/NotificationsView';
+import { History, Trophy, ChevronLeft, ChevronRight, Search, Menu, X, Users, Activity, User, LogIn, LogOut, Camera, Upload, Info, Mail, Layers, Star, PlayCircle, Flag, Filter, Calendar, Zap, Loader2, Trash2, Edit3, Target, Moon, Sun, Bell } from 'lucide-react';
 
 // --- CONFIGURATION ---
 const LOGO_URL = "https://i.postimg.cc/fRdWdn9t/20251127-224320.png";
@@ -63,11 +68,11 @@ const PlayerSelectModal = ({
 
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 animate-scale-up">
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-md p-6 animate-scale-up border dark:border-slate-700">
                 {!selectedId ? (
                     <>
-                        <h3 className="text-xl font-bold mb-4 text-accent">Select {label}</h3>
-                        <div className="max-h-60 overflow-y-auto space-y-2">
+                        <h3 className="text-xl font-bold mb-4 text-accent dark:text-blue-400">Select {label}</h3>
+                        <div className="max-h-60 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
                             {players.map(p => {
                                 const isBatsmanOut = !ignoreStats && variant === 'BATSMAN' && p.isOut;
                                 const isDisabledByProp = disabledIds.includes(p.id);
@@ -82,9 +87,9 @@ const PlayerSelectModal = ({
                                         key={p.id}
                                         onClick={() => handleSelect(p.id)}
                                         disabled={isDisabled}
-                                        className={`w-full p-3 text-left rounded-lg border flex items-center gap-3 ${isDisabled ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'hover:bg-blue-50 border-gray-200 text-gray-900 group'}`}
+                                        className={`w-full p-3 text-left rounded-lg border flex items-center gap-3 transition-colors ${isDisabled ? 'bg-gray-100 dark:bg-slate-800/50 text-gray-400 dark:text-gray-600 border-gray-200 dark:border-slate-700 cursor-not-allowed' : 'bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 border-gray-200 dark:border-slate-600 text-gray-900 dark:text-white group'}`}
                                     >
-                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center border ${isDisabled ? 'bg-gray-200 border-gray-300' : 'bg-gray-100 border-gray-300 group-hover:bg-white'}`}>
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center border ${isDisabled ? 'bg-gray-200 dark:bg-slate-700 border-gray-300 dark:border-slate-600' : 'bg-gray-100 dark:bg-slate-700 border-gray-300 dark:border-slate-500 group-hover:bg-white dark:group-hover:bg-slate-600'}`}>
                                             {p.avatar ? (
                                                 <img src={p.avatar} alt="" className="w-full h-full rounded-full object-cover" />
                                             ) : (
@@ -93,7 +98,7 @@ const PlayerSelectModal = ({
                                         </div>
                                         <div>
                                             <div className="font-semibold">{p.name}</div>
-                                            {statusText && <div className="text-xs font-bold">{statusText}</div>}
+                                            {statusText && <div className="text-xs font-bold dark:text-gray-400">{statusText}</div>}
                                         </div>
                                     </button>
                                 );
@@ -102,16 +107,16 @@ const PlayerSelectModal = ({
                     </>
                 ) : (
                     <div className="text-center animate-fade-in">
-                        <h3 className="text-xl font-bold mb-2 text-accent">Confirm Selection</h3>
-                        <p className="text-gray-600 mb-6">Select <span className="font-bold text-gray-900">{selectedPlayer?.name}</span> as {label}?</p>
+                        <h3 className="text-xl font-bold mb-2 text-accent dark:text-blue-400">Confirm Selection</h3>
+                        <p className="text-gray-600 dark:text-gray-300 mb-6">Select <span className="font-bold text-gray-900 dark:text-white">{selectedPlayer?.name}</span> as {label}?</p>
 
                         <div className="flex justify-center mb-6">
-                            <div className="w-20 h-20 rounded-full border-4 border-gray-100 overflow-hidden shadow-sm">
+                            <div className="w-20 h-20 rounded-full border-4 border-gray-100 dark:border-slate-700 overflow-hidden shadow-sm">
                                 {selectedPlayer?.avatar ? (
                                     <img src={selectedPlayer.avatar} alt="" className="w-full h-full object-cover" />
                                 ) : (
-                                    <div className="w-full h-full bg-gray-50 flex items-center justify-center">
-                                        <User className="w-8 h-8 text-gray-300" />
+                                    <div className="w-full h-full bg-gray-50 dark:bg-slate-700 flex items-center justify-center">
+                                        <User className="w-8 h-8 text-gray-300 dark:text-gray-500" />
                                     </div>
                                 )}
                             </div>
@@ -120,7 +125,7 @@ const PlayerSelectModal = ({
                         <div className="grid grid-cols-2 gap-3">
                             <button
                                 onClick={handleCancel}
-                                className="py-3 px-4 rounded-lg font-bold border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors"
+                                className="py-3 px-4 rounded-lg font-bold border border-gray-300 dark:border-slate-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
                             >
                                 No, Change
                             </button>
@@ -448,13 +453,14 @@ const ProfileView = ({ userProfile, dbPlayers, onViewStats, onSave, onLogout }: 
     );
 };
 
-const Navbar = ({ activeView, onViewChange, isMatchActive, userProfile }: { activeView: string, onViewChange: (v: string) => void, isMatchActive: boolean, userProfile: UserProfile | null }) => {
+const Navbar = ({ activeView, onViewChange, isMatchActive, userProfile, isDarkMode, toggleDarkMode }: { activeView: string, onViewChange: (v: string) => void, isMatchActive: boolean, userProfile: UserProfile | null, isDarkMode: boolean, toggleDarkMode: () => void }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     const navItems = [
         { id: 'HOME', label: 'Home', icon: Trophy },
         { id: 'HISTORY', label: 'History', icon: History },
         { id: 'PLAYERS', label: 'Players', icon: Users },
+        { id: 'TEAMS', label: 'Teams', icon: Users },
         { id: 'TOURNAMENT_HOME', label: 'Tournaments', icon: Flag },
         { id: 'COMMUNITY', label: 'Community', icon: Target },
         { id: 'ABOUT', label: 'About', icon: Info },
@@ -467,11 +473,11 @@ const Navbar = ({ activeView, onViewChange, isMatchActive, userProfile }: { acti
 
     return (
         <nav className="bg-accent text-white sticky top-0 z-50 shadow-md">
-            <div className="max-w-5xl mx-auto px-4">
-                <div className="flex justify-between items-center h-16">
+            <div className="max-w-7xl mx-auto px-4 lg:px-8">
+                <div className="flex justify-between items-center h-16 gap-4">
                     <div
                         onClick={() => handleNav('HOME')}
-                        className="flex items-center gap-2 cursor-pointer group"
+                        className="flex shrink-0 items-center gap-2 cursor-pointer group mr-2 md:mr-4"
                     >
                         <img
                             src={LOGO_URL}
@@ -488,7 +494,7 @@ const Navbar = ({ activeView, onViewChange, isMatchActive, userProfile }: { acti
                         <span className="font-bold text-xl tracking-tight hidden sm:block">ARcricinfo</span>
                     </div>
 
-                    <div className="hidden md:flex items-center gap-6">
+                    <div className="hidden lg:flex flex-1 justify-center items-center gap-4 xl:gap-6">
                         {navItems.map(item => (
                             <button
                                 key={item.id}
@@ -499,18 +505,37 @@ const Navbar = ({ activeView, onViewChange, isMatchActive, userProfile }: { acti
                                 {item.label}
                             </button>
                         ))}
+                    </div>
 
+                    <div className="flex shrink-0 items-center gap-2 md:gap-4">
                         {isMatchActive && activeView !== 'LIVE' && activeView !== 'TOSS' && activeView !== 'SETUP' && (
                             <button
                                 onClick={() => handleNav('LIVE')}
                                 className="flex items-center gap-2 px-3 py-1.5 bg-red-600 rounded-full animate-pulse text-xs font-bold"
                             >
-                                <Activity className="w-3 h-3" /> LIVE
+                                <Activity className="w-3 h-3" /> <span className="hidden md:inline">LIVE</span>
                             </button>
                         )}
-                    </div>
 
-                    <div className="flex items-center gap-4">
+                        <button 
+                            onClick={toggleDarkMode} 
+                            className="p-1.5 hover:bg-white/10 rounded-full transition-colors flex items-center justify-center border border-transparent hover:border-white/20"
+                            title="Toggle Dark Mode"
+                        >
+                            {isDarkMode ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-indigo-300" />}
+                        </button>
+
+                        {userProfile && (
+                            <button
+                                onClick={() => handleNav('NOTIFICATIONS')}
+                                className="p-1.5 hover:bg-white/10 rounded-full transition-colors relative mr-2"
+                                title="Inbox Updates"
+                            >
+                                <Bell className={`w-5 h-5 ${activeView === 'NOTIFICATIONS' ? 'text-yellow-400' : 'text-white'}`} />
+                                <span className="absolute top-1 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
+                                <span className="absolute top-1 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+                            </button>
+                        )}
                         <button
                             onClick={() => handleNav('PROFILE')}
                             className="flex items-center gap-2 hover:bg-white/10 p-1.5 rounded-lg transition-colors"
@@ -564,20 +589,61 @@ const Navbar = ({ activeView, onViewChange, isMatchActive, userProfile }: { acti
 
 const AppInner = () => {
     const { toast, confirm: showConfirm } = useToast();
-    // ─── Live Score Public View (detected via ?live= param) ─────────────────
+    
+    // ─── Dark Mode State ──────────────────────────────────────────────────────
+    const [isDarkMode, setIsDarkMode] = useState(() => {
+        return localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    });
+
+    useEffect(() => {
+        if (isDarkMode) {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+        }
+    }, [isDarkMode]);
+
+    const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
     const [liveViewMatchId, setLiveViewMatchId] = useState<string | null>(null);
+    const [publicPlayerId, setPublicPlayerId] = useState<string | null>(null);
+    const [isBroadcastMode, setIsBroadcastMode] = useState<boolean>(false);
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const liveId = params.get('live');
-        if (liveId) setLiveViewMatchId(liveId);
+        const broadcast = params.get('broadcast') === 'true';
+        if (liveId) {
+            setLiveViewMatchId(liveId);
+            setIsBroadcastMode(broadcast);
+        }
+
+        const playerId = params.get('player');
+        if (playerId) {
+            setPublicPlayerId(playerId);
+        }
+        
+        // Handle Team Join invite links
+        const joinTeamId = params.get('joinTeam');
+        if (joinTeamId) {
+            // We store the pending join request in localStorage
+            localStorage.setItem('pending_join_team', joinTeamId);
+        }
     }, []);
 
     // If viewing a live match, render the public LiveScoreView immediately
     if (liveViewMatchId) {
+        if (isBroadcastMode) {
+            return <BroadcastOverlay matchId={liveViewMatchId} />;
+        }
         return <LiveScoreView matchId={liveViewMatchId} onClose={() => {
             window.history.replaceState(null, '', window.location.pathname);
             setLiveViewMatchId(null);
         }} />;
+    }
+
+    if (publicPlayerId) {
+        return <PublicProfileView playerId={publicPlayerId} />;
     }
 
     // ─── Auth State ───────────────────────────────────────────────────────────
@@ -607,7 +673,7 @@ const AppInner = () => {
     const [view, setView] = useState('HOME');
     const [animEvent, setAnimEvent] = useState<AnimationEvent>({ type: 'NONE', message: '' });
     const [searchQuery, setSearchQuery] = useState('');
-    const [historyFilter, setHistoryFilter] = useState<'ALL' | 'SINGLE' | 'SERIES'>('ALL');
+    const [historyFilter, setHistoryFilter] = useState<'ALL' | 'SINGLE' | 'SERIES' | 'TOURNAMENTS'>('ALL');
     const [undoStack, setUndoStack] = useState<Match[]>([]);
     const [showAuthModal, setShowAuthModal] = useState(false);
 
@@ -761,6 +827,36 @@ const AppInner = () => {
         return () => subscription.unsubscribe();
     }, [loadUserData]);
 
+    // ─── Process Pending Join Team ───────────────────────────────────────────
+    useEffect(() => {
+        const pendingTeamId = localStorage.getItem('pending_join_team');
+        if (pendingTeamId) {
+            if (!isAuthLoading && !authUser) {
+                // Not authenticated yet, show login modal
+                setShowAuthModal(true);
+            } else if (authUser && userProfile) {
+                // Authenticated, prompt to join
+                const confirmJoin = window.confirm(`You have been invited to join a team. Do you want to accept?`);
+                if (confirmJoin) {
+                    joinTeam(pendingTeamId, {
+                        id: authUser.id,
+                        name: userProfile.name,
+                        avatar: userProfile.avatar,
+                        mobileNo: userProfile.mobileNo
+                    }).then(() => {
+                        toast(`Successfully joined the team!`, 'success');
+                        setView('TEAMS');
+                        loadUserData(authUser); // reload teams
+                    });
+                }
+                localStorage.removeItem('pending_join_team');
+                // Remove param from URL without reloading
+                const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+                window.history.replaceState({path: newUrl}, '', newUrl);
+            }
+        }
+    }, [authUser, userProfile, isAuthLoading, loadUserData, toast]);
+
     // ─── localStorage mirrors (offline cache) ────────────────────────────────
     useEffect(() => { localStorage.setItem('match_history', JSON.stringify(history)); }, [history]);
     useEffect(() => {
@@ -792,7 +888,7 @@ const AppInner = () => {
     };
 
     const saveToHistory = (completedMatch: Match) => {
-        const updatedHistory = [completedMatch, ...history];
+        const updatedHistory = [completedMatch, ...history.filter(m => m.id !== completedMatch.id)];
         setHistory(updatedHistory);
         // Persist match + sync player stats
         if (authUser) {
@@ -1191,6 +1287,13 @@ const AppInner = () => {
             striker.runs += batsmanRuns;
             if (batsmanRuns === 4) striker.fours += 1;
             if (batsmanRuns === 6) striker.sixes += 1;
+
+            // Check Milestones
+            if (striker.runs === 50) {
+                socket.emit('match_milestone', { matchId: newMatch.id, title: 'Half Century', message: `${striker.name} reached 50!`, type: 'success' });
+            } else if (striker.runs === 100) {
+                socket.emit('match_milestone', { matchId: newMatch.id, title: 'Century!', message: `${striker.name} reached 100!`, type: 'accent' });
+            }
         }
 
         // Update Player Stats (Bowler)
@@ -1227,6 +1330,16 @@ const AppInner = () => {
 
             newMatch.currentStrikerId = undefined;
             setAnimEvent({ type: 'WICKET', message: `${striker.name} OUT!` });
+
+            // Emit Milestone
+            if (newMatch.id) {
+                socket.emit('match_milestone', {
+                    matchId: newMatch.id,
+                    title: 'Wicket!',
+                    message: `${striker.name} is out (${dismissalType.replace('_', ' ')})`,
+                    type: 'error'
+                });
+            }
 
             // Update fielder stats (catches / stumpings)
             if (fielderId && (dismissalType === DismissalType.CAUGHT || dismissalType === DismissalType.STUMPED)) {
@@ -1460,7 +1573,7 @@ const AppInner = () => {
     if (view === 'ABOUT') {
         return (
             <div className="min-h-screen bg-primary">
-                <Navbar activeView={view} onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} />
+                <Navbar activeView={view} onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
                 <div className="p-4">
                     <AboutView />
                 </div>
@@ -1471,7 +1584,7 @@ const AppInner = () => {
     if (view === 'TEAMS') {
         return (
             <div className="min-h-screen bg-primary">
-                <Navbar activeView={view} onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} />
+                <Navbar activeView={view} onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
                 <TeamsView 
                     teams={persistentTeams} 
                     isLoading={isPlayersLoading} 
@@ -1492,7 +1605,7 @@ const AppInner = () => {
     if (view === 'PROFILE') {
         return (
             <div className="min-h-screen bg-primary">
-                <Navbar activeView={view} onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} />
+                <Navbar activeView={view} onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
                 {authUser ? (
                     <ProfileView
                         userProfile={userProfile}
@@ -1520,7 +1633,7 @@ const AppInner = () => {
     if (view === 'PLAYERS') {
         return (
             <div className="min-h-screen bg-primary">
-                <Navbar activeView={view} onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} />
+                <Navbar activeView={view} onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
                 <PlayersView
                     players={dbPlayers}
                     isLoading={isPlayersLoading}
@@ -1536,9 +1649,10 @@ const AppInner = () => {
     if (view === 'PLAYER_PROFILE' && selectedPlayer) {
         return (
             <div className="min-h-screen bg-primary">
-                <Navbar activeView="PLAYERS" onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} />
+                <Navbar activeView="HISTORY" onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
                 <PlayerProfileView
                     player={selectedPlayer}
+                    allPlayers={dbPlayers}
                     allMatches={history}
                     onBack={() => setView('PLAYERS')}
                     onMatchClick={(m) => {
@@ -1550,11 +1664,20 @@ const AppInner = () => {
         )
     }
 
+    if (view === 'NOTIFICATIONS') {
+        return (
+            <div className="min-h-screen bg-primary font-sans relative">
+                <Navbar activeView="NOTIFICATIONS" onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
+                <NotificationsView userProfile={userProfile} />
+            </div>
+        )
+    }
+
     // ─── Tournament Views ──────────────────────────────────────────────────────
     if (view === 'COMMUNITY') {
         return (
             <div className="min-h-screen bg-primary">
-                <Navbar activeView="COMMUNITY" onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} />
+                <Navbar activeView="COMMUNITY" onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
                 <CommunityBoard />
             </div>
         )
@@ -1563,7 +1686,7 @@ const AppInner = () => {
     if (view === 'TOURNAMENT_HOME') {
         return (
             <div className="min-h-screen bg-primary">
-                <Navbar activeView={view} onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} />
+                <Navbar activeView={view} onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
                 <div className="max-w-4xl mx-auto px-4 py-8 animate-fade-in">
                     <div className="flex items-center justify-between mb-6">
                         <div>
@@ -1651,7 +1774,7 @@ const AppInner = () => {
     if (view === 'TOURNAMENT_SETUP') {
         return (
             <div className="min-h-screen bg-primary">
-                <Navbar activeView="TOURNAMENT_HOME" onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} />
+                <Navbar activeView="TOURNAMENT_HOME" onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
                 <TournamentSetup
                     onTournamentCreate={handleTournamentCreate}
                     onBack={() => setView('TOURNAMENT_HOME')}
@@ -1663,7 +1786,7 @@ const AppInner = () => {
     if (view === 'TOURNAMENT_VIEW' && activeTournament) {
         return (
             <div className="min-h-screen bg-primary">
-                <Navbar activeView="TOURNAMENT_HOME" onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} />
+                <Navbar activeView="TOURNAMENT_HOME" onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
                 <TournamentView
                     tournament={activeTournament}
                     matches={history.filter(m => m.tournamentId === activeTournament.id && m.status === MatchStatus.COMPLETED)}
@@ -1687,7 +1810,7 @@ const AppInner = () => {
     if (view === 'SETUP_TOURNAMENT_MATCH' && activeTournament && activeTournamentFixture) {
         return (
             <div className="min-h-screen bg-primary">
-                <Navbar activeView="TOURNAMENT_HOME" onViewChange={handleViewChange} isMatchActive={false} userProfile={userProfile} />
+                <Navbar activeView="TOURNAMENT_HOME" onViewChange={handleViewChange} isMatchActive={false} userProfile={userProfile} isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
                 <div className="max-w-xl mx-auto px-4 py-6">
                     <div className="mb-4 flex items-center gap-2">
                         <button onClick={() => { setView('TOURNAMENT_VIEW'); setActiveTournamentFixture(null); }}
@@ -1743,7 +1866,7 @@ const AppInner = () => {
     if (view === 'SERIES_SUMMARY') {
         return (
             <div className="min-h-screen bg-primary">
-                <Navbar activeView="HOME" onViewChange={handleViewChange} isMatchActive={false} userProfile={userProfile} />
+                <Navbar activeView="HOME" onViewChange={handleViewChange} isMatchActive={false} userProfile={userProfile} isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
                 <div className="max-w-4xl mx-auto p-4 md:p-8 animate-fade-in">
                     <div className="bg-white rounded-2xl shadow-xl overflow-hidden text-center">
                         <div className="bg-gradient-to-br from-indigo-900 to-purple-900 text-white p-12">
@@ -1837,9 +1960,13 @@ const AppInner = () => {
             return matchesQuery && matchesType;
         });
 
+        const completedTournaments = tournaments.filter(t => t.status === 'COMPLETED' && (
+            searchQuery === '' || t.name.toLowerCase().includes(searchQuery.toLowerCase())
+        ));
+
         return (
             <div className="min-h-screen bg-primary">
-                <Navbar activeView={view} onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} />
+                <Navbar activeView={view} onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
                 <div className="max-w-5xl mx-auto p-4 md:p-8 animate-fade-in">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                         <h2 className="text-3xl font-bold text-accent flex items-center gap-3">
@@ -1879,10 +2006,56 @@ const AppInner = () => {
                         >
                             <Layers className="w-4 h-4" /> Series Matches
                         </button>
+                        <button
+                            onClick={() => setHistoryFilter('TOURNAMENTS')}
+                            className={`px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 transition-colors whitespace-nowrap ${historyFilter === 'TOURNAMENTS' ? 'bg-accent text-white shadow-lg' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}
+                        >
+                            <Trophy className="w-4 h-4" /> Tournaments
+                        </button>
                     </div>
 
                     <div className="grid gap-4">
-                        {filteredHistory.length === 0 ? (
+                        {historyFilter === 'TOURNAMENTS' ? (
+                            completedTournaments.length === 0 ? (
+                                <div className="text-center py-20 bg-white rounded-xl border border-dashed border-gray-300">
+                                    <Trophy className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                                    <p className="text-gray-500 font-medium">No completed tournaments found.</p>
+                                </div>
+                            ) : (
+                                completedTournaments.map(t => (
+                                    <div
+                                        key={t.id}
+                                        onClick={() => { setActiveTournament(t); setView('TOURNAMENT_VIEW'); }}
+                                        className="bg-white p-6 rounded-xl shadow-sm border border-secondary/30 hover:shadow-md transition-shadow cursor-pointer relative overflow-hidden group"
+                                    >
+                                        <div className="absolute top-0 right-0 bg-yellow-100 text-yellow-700 text-[10px] font-bold px-2 py-1 rounded-bl-lg">
+                                            TOURNAMENT
+                                        </div>
+                                        <div className="flex justify-between items-center mb-4">
+                                            <span className="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                                                <Calendar className="w-3 h-3" /> {new Date(t.date).toLocaleDateString()}
+                                            </span>
+                                            <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
+                                                Completed
+                                            </span>
+                                        </div>
+                                        <div className="flex flex-col gap-1 mb-4">
+                                            <div className="text-2xl font-black text-gray-900">{t.name}</div>
+                                            <div className="text-sm text-gray-500 font-medium">
+                                                {t.format === 'KNOCKOUT' ? 'Knockout' : 'League'} Format • {t.teams.length} Teams
+                                            </div>
+                                        </div>
+                                        {t.champion && (
+                                            <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-2">
+                                                <Trophy className="w-5 h-5 text-yellow-500" />
+                                                <span className="font-bold text-gray-800">Champion:</span>
+                                                <span className="font-black text-accent">{t.champion}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))
+                            )
+                        ) : filteredHistory.length === 0 ? (
                             <div className="text-center py-20 bg-white rounded-xl border border-dashed border-gray-300">
                                 <History className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                                 <p className="text-gray-500 font-medium">No matches found.</p>
@@ -1912,10 +2085,10 @@ const AppInner = () => {
                                             <Calendar className="w-3 h-3" /> {m.status === MatchStatus.SCHEDULED ? new Date(m.date).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : new Date(m.date).toLocaleDateString()}
                                         </span>
                                         <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                                            m.status === MatchStatus.COMPLETED ? 'bg-green-100 text-green-700' : 
-                                            m.status === MatchStatus.TIED ? 'bg-purple-100 text-purple-700' : 
-                                            m.status === MatchStatus.SCHEDULED ? 'bg-indigo-100 text-indigo-700' :
-                                            'bg-yellow-100 text-yellow-700'
+                                            m.status === MatchStatus.COMPLETED ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 
+                                            m.status === MatchStatus.TIED ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' : 
+                                            m.status === MatchStatus.SCHEDULED ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' :
+                                            'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
                                         }`}>
                                             {m.status === MatchStatus.COMPLETED ? 'Completed' : 
                                              m.status === MatchStatus.TIED ? 'Tied' : 
@@ -1923,16 +2096,42 @@ const AppInner = () => {
                                              'In Progress'}
                                         </span>
                                     </div>
-                                    <div className="flex justify-between items-center">
-                                        <div className="text-xl font-bold text-gray-800 group-hover:text-accent transition-colors">
-                                            {m.teamA.name} <span className="text-gray-400 mx-2">vs</span> {m.teamB.name}
-                                        </div>
-                                        <div className="text-right">
-                                            <div className="text-sm text-gray-500">Winner</div>
-                                            <div className="font-bold text-accent">
-                                                {m.winningTeamId ? (m.winningTeamId === m.teamA.id ? m.teamA.name : m.teamB.name) : 'Draw'}
+                                    <div className="flex flex-col gap-3">
+                                        <div className="flex justify-between items-center">
+                                            <div className={`text-lg font-bold ${m.winningTeamId && m.winningTeamId !== m.teamA.id ? 'text-gray-500' : 'text-gray-900 dark:text-gray-100'}`}>
+                                                {m.teamA.name}
                                             </div>
+                                            {m.status !== MatchStatus.SCHEDULED && (
+                                                <div className={`text-lg font-black ${m.winningTeamId && m.winningTeamId !== m.teamA.id ? 'text-gray-500' : 'text-gray-900 dark:text-gray-100'}`}>
+                                                    {m.teamA.totalRuns}/{m.teamA.wickets} <span className="text-xs text-gray-500 font-medium dark:text-gray-400">({Math.floor(m.teamA.overs / 6)}.{m.teamA.overs % 6} Ov)</span>
+                                                </div>
+                                            )}
                                         </div>
+                                        <div className="flex justify-between items-center">
+                                            <div className={`text-lg font-bold ${m.winningTeamId && m.winningTeamId !== m.teamB.id ? 'text-gray-500' : 'text-gray-900 dark:text-gray-100'}`}>
+                                                {m.teamB.name}
+                                            </div>
+                                            {m.status !== MatchStatus.SCHEDULED && (
+                                                <div className={`text-lg font-black ${m.winningTeamId && m.winningTeamId !== m.teamB.id ? 'text-gray-500' : 'text-gray-900 dark:text-gray-100'}`}>
+                                                    {m.teamB.totalRuns}/{m.teamB.wickets} <span className="text-xs text-gray-500 font-medium dark:text-gray-400">({Math.floor(m.teamB.overs / 6)}.{m.teamB.overs % 6} Ov)</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-700/50 flex justify-between items-center">
+                                        <div className="text-sm font-bold text-accent dark:text-blue-400">
+                                            {m.status === MatchStatus.SCHEDULED ? 'Match yet to begin' : 
+                                             m.status === MatchStatus.COMPLETED ? (
+                                                m.winningTeamId ? `${m.winningTeamId === m.teamA.id ? m.teamA.name : m.teamB.name} won` : 'Match Drawn / Tied'
+                                             ) : 'Match in progress'}
+                                        </div>
+                                        {m.status === MatchStatus.SCHEDULED && (
+                                            <div className="text-white font-bold bg-indigo-600 hover:bg-indigo-700 text-xs px-3 py-1.5 rounded-lg transition-colors">Start Match</div>
+                                        )}
+                                        {m.status === MatchStatus.LIVE && (
+                                            <div className="text-white font-bold bg-red-600 hover:bg-red-700 animate-pulse text-xs px-3 py-1.5 rounded-lg transition-colors">Resume</div>
+                                        )}
                                     </div>
                                 </div>
                             ))
@@ -1969,10 +2168,10 @@ const AppInner = () => {
     return (
         <div className="min-h-screen bg-primary font-sans relative">
             <AnimationOverlay event={animEvent} onComplete={handleAnimComplete} />
-            <Navbar activeView={match ? 'LIVE' : 'HOME'} onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} />
+            <Navbar activeView={match ? 'LIVE' : 'HOME'} onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
 
             {!match ? (
-                <div className="flex flex-col items-center justify-center min-h-[85vh] p-4 animate-fade-in bg-[url('https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&q=80')] bg-cover bg-center bg-blend-overlay bg-white/90">
+                <div className="flex flex-col items-center justify-center min-h-[85vh] p-4 animate-fade-in bg-gray-50 dark:bg-slate-900 transition-colors">
 
                     {view === 'HOME' ? (
                         <div className="flex flex-col gap-8 w-full max-w-6xl mx-auto pb-12">
@@ -2003,22 +2202,22 @@ const AppInner = () => {
 
                             {/* Ongoing Match/Series Alert */}
                             {series && (
-                                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 p-6 rounded-2xl shadow-lg flex justify-between items-center transform transition-transform hover:-translate-y-1">
+                                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-800 border border-blue-200 dark:border-indigo-500/50 p-6 rounded-2xl shadow-lg flex justify-between items-center transform transition-transform hover:-translate-y-1">
                                     <div className="flex items-center gap-4">
-                                        <div className="bg-blue-100 p-3 rounded-full text-blue-600 animate-pulse">
+                                        <div className="bg-blue-100 dark:bg-indigo-900/40 p-3 rounded-full text-blue-600 dark:text-indigo-400 animate-pulse">
                                             <PlayCircle className="w-8 h-8" />
                                         </div>
                                         <div>
-                                            <h3 className="text-blue-900 font-bold uppercase tracking-wider text-sm mb-1">Ongoing Series</h3>
-                                            <div className="text-2xl font-black text-gray-800">{series.teamAName} <span className="text-gray-400 text-lg mx-1">vs</span> {series.teamBName}</div>
-                                            <div className="text-sm text-gray-600 font-medium mt-1">
-                                                Score: <span className="text-blue-600 font-bold">{series.teamAWins}</span> - <span className="text-blue-600 font-bold">{series.teamBWins}</span>
+                                            <h3 className="text-blue-900 dark:text-indigo-300 font-bold uppercase tracking-wider text-sm mb-1">Ongoing Series</h3>
+                                            <div className="text-2xl font-black text-gray-800 dark:text-white">{series.teamAName} <span className="text-gray-400 text-lg mx-1">vs</span> {series.teamBName}</div>
+                                            <div className="text-sm text-gray-600 dark:text-gray-400 font-medium mt-1">
+                                                Score: <span className="text-blue-600 dark:text-indigo-400 font-bold">{series.teamAWins}</span> - <span className="text-blue-600 dark:text-indigo-400 font-bold">{series.teamBWins}</span>
                                             </div>
                                         </div>
                                     </div>
                                     <button
                                         onClick={() => setView('SERIES_DASHBOARD')}
-                                        className="px-6 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors shadow-md"
+                                        className="px-6 py-3 bg-blue-600 dark:bg-indigo-600 text-white font-bold rounded-xl hover:bg-blue-700 dark:hover:bg-indigo-500 transition-colors shadow-md"
                                     >
                                         Resume Action
                                     </button>
@@ -2029,57 +2228,57 @@ const AppInner = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                                 <button
                                     onClick={() => requireAuth(() => setView('SETUP'))}
-                                    className="group relative overflow-hidden bg-white p-6 rounded-2xl shadow-lg transition-all hover:shadow-2xl hover:-translate-y-2 border border-gray-100 flex flex-col items-center justify-center gap-4 min-h-[200px]"
+                                    className="group relative overflow-hidden bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg transition-all hover:shadow-2xl hover:-translate-y-2 border border-gray-100 dark:border-slate-700 flex flex-col items-center justify-center gap-4 min-h-[200px]"
                                 >
-                                    <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-emerald-100 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                                    <div className="relative z-10 bg-green-100 text-green-600 p-4 rounded-full group-hover:scale-110 group-hover:bg-green-600 group-hover:text-white transition-all duration-300 shadow-sm">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-emerald-100 dark:from-slate-700 dark:to-slate-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                    <div className="relative z-10 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 p-4 rounded-full group-hover:scale-110 group-hover:bg-green-600 group-hover:text-white dark:group-hover:bg-green-500 transition-all duration-300 shadow-sm">
                                         <PlayCircle className="w-8 h-8 md:w-10 md:h-10" />
                                     </div>
                                     <div className="relative z-10 text-center">
-                                        <span className="text-xl font-bold text-gray-800 block mb-1">New Match</span>
-                                        <span className="text-gray-500 text-sm font-medium">Play instantly or schedule it</span>
+                                        <span className="text-xl font-bold text-gray-800 dark:text-white block mb-1">New Match</span>
+                                        <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">Play instantly or schedule it</span>
                                     </div>
                                 </button>
 
                                 <button
                                     onClick={() => requireAuth(() => setView('TOURNAMENT_HOME'))}
-                                    className="group relative overflow-hidden bg-white p-6 rounded-2xl shadow-lg transition-all hover:shadow-2xl hover:-translate-y-2 border border-gray-100 flex flex-col items-center justify-center gap-4 min-h-[200px]"
+                                    className="group relative overflow-hidden bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg transition-all hover:shadow-2xl hover:-translate-y-2 border border-gray-100 dark:border-slate-700 flex flex-col items-center justify-center gap-4 min-h-[200px]"
                                 >
-                                    <div className="absolute inset-0 bg-gradient-to-br from-purple-50 to-fuchsia-100 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                                    <div className="relative z-10 bg-purple-100 text-purple-600 p-4 rounded-full group-hover:scale-110 group-hover:bg-purple-600 group-hover:text-white transition-all duration-300 shadow-sm">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-purple-50 to-fuchsia-100 dark:from-slate-700 dark:to-slate-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                    <div className="relative z-10 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 p-4 rounded-full group-hover:scale-110 group-hover:bg-purple-600 group-hover:text-white dark:group-hover:bg-purple-500 transition-all duration-300 shadow-sm">
                                         <Trophy className="w-8 h-8 md:w-10 md:h-10" />
                                     </div>
                                     <div className="relative z-10 text-center">
-                                        <span className="text-xl font-bold text-gray-800 block mb-1">Tournaments</span>
-                                        <span className="text-gray-500 text-sm font-medium">Host, schedule & manage</span>
+                                        <span className="text-xl font-bold text-gray-800 dark:text-white block mb-1">Tournaments</span>
+                                        <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">Host, schedule & manage</span>
                                     </div>
                                 </button>
 
                                 <button
                                     onClick={() => requireAuth(() => handleStartSeries())}
-                                    className="group relative overflow-hidden bg-white p-6 rounded-2xl shadow-lg transition-all hover:shadow-2xl hover:-translate-y-2 border border-gray-100 flex flex-col items-center justify-center gap-4 min-h-[200px]"
+                                    className="group relative overflow-hidden bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg transition-all hover:shadow-2xl hover:-translate-y-2 border border-gray-100 dark:border-slate-700 flex flex-col items-center justify-center gap-4 min-h-[200px]"
                                 >
-                                    <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-100 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                                    <div className="relative z-10 bg-blue-100 text-blue-600 p-4 rounded-full group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 shadow-sm">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-700 dark:to-slate-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                    <div className="relative z-10 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 p-4 rounded-full group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white dark:group-hover:bg-blue-500 transition-all duration-300 shadow-sm">
                                         <Layers className="w-8 h-8 md:w-10 md:h-10" />
                                     </div>
                                     <div className="relative z-10 text-center">
-                                        <span className="text-xl font-bold text-gray-800 block mb-1">Series</span>
-                                        <span className="text-gray-500 text-sm font-medium">Multi-game clash</span>
+                                        <span className="text-xl font-bold text-gray-800 dark:text-white block mb-1">Series</span>
+                                        <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">Multi-game clash</span>
                                     </div>
                                 </button>
 
                                 <button
                                     onClick={() => setView('HISTORY')}
-                                    className="group relative overflow-hidden bg-white p-6 rounded-2xl shadow-lg transition-all hover:shadow-2xl hover:-translate-y-2 border border-gray-100 flex flex-col items-center justify-center gap-4 min-h-[200px]"
+                                    className="group relative overflow-hidden bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg transition-all hover:shadow-2xl hover:-translate-y-2 border border-gray-100 dark:border-slate-700 flex flex-col items-center justify-center gap-4 min-h-[200px]"
                                 >
-                                    <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-amber-100 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                                    <div className="relative z-10 bg-orange-100 text-orange-600 p-4 rounded-full group-hover:scale-110 group-hover:bg-orange-600 group-hover:text-white transition-all duration-300 shadow-sm">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-amber-100 dark:from-slate-700 dark:to-slate-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                    <div className="relative z-10 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 p-4 rounded-full group-hover:scale-110 group-hover:bg-orange-600 group-hover:text-white dark:group-hover:bg-orange-500 transition-all duration-300 shadow-sm">
                                         <History className="w-8 h-8 md:w-10 md:h-10" />
                                     </div>
                                     <div className="relative z-10 text-center">
-                                        <span className="text-xl font-bold text-gray-800 block mb-1">History</span>
-                                        <span className="text-gray-500 text-sm font-medium">Match Archives</span>
+                                        <span className="text-xl font-bold text-gray-800 dark:text-white block mb-1">History</span>
+                                        <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">Match Archives</span>
                                     </div>
                                 </button>
                             </div>
@@ -2197,7 +2396,7 @@ const AppInner = () => {
                 </div>
             ) : (
                 <div className="max-w-5xl mx-auto p-4 pb-24 md:pb-8">
-                    {match.status === MatchStatus.TOSS && (
+                    {(match.status === MatchStatus.TOSS || match.status === MatchStatus.SCHEDULED) && (
                         <TossInterface match={match} onComplete={handleTossComplete} />
                     )}
 
@@ -2445,6 +2644,11 @@ const AppInner = () => {
                             {/* Wagon Wheel */}
                             <div className="mt-6 max-w-lg mx-auto">
                                 <WagonWheel balls={match.balls} size={280} />
+                            </div>
+
+                            {/* Match Analytics */}
+                            <div className="mt-6 max-w-lg mx-auto">
+                                <MatchAnalytics match={match} />
                             </div>
 
                             {/* Ball-by-Ball Timeline */}

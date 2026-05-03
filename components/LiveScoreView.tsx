@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Match, MatchStatus } from '../types';
 import { loadLiveScore } from '../utils/db';
 import { supabase } from '../utils/supabase';
-import { Loader2, Wifi, WifiOff, Trophy, Activity, Youtube } from 'lucide-react';
+import { Loader2, Wifi, WifiOff, Trophy, Activity, Youtube, Bell, BellRing } from 'lucide-react';
+import { useToast } from './Toast';
 
 // Helper to extract YouTube video ID from various URL formats
 const getYouTubeVideoId = (url: string) => {
@@ -22,6 +23,29 @@ export const LiveScoreView: React.FC<LiveScoreViewProps> = ({ matchId, onClose }
   const [error, setError] = useState('');
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [isConnected, setIsConnected] = useState(true);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const toast = useToast();
+
+  // Load follow state from localStorage
+  useEffect(() => {
+    const followedMatches = JSON.parse(localStorage.getItem('followed_matches') || '[]');
+    if (followedMatches.includes(matchId)) setIsFollowing(true);
+  }, [matchId]);
+
+  const toggleFollow = () => {
+    const followedMatches = JSON.parse(localStorage.getItem('followed_matches') || '[]');
+    if (isFollowing) {
+        const updated = followedMatches.filter((id: string) => id !== matchId);
+        localStorage.setItem('followed_matches', JSON.stringify(updated));
+        setIsFollowing(false);
+        toast('Unfollowed match. You will no longer receive milestone notifications.', 'info');
+    } else {
+        followedMatches.push(matchId);
+        localStorage.setItem('followed_matches', JSON.stringify(followedMatches));
+        setIsFollowing(true);
+        toast('Following match! You will receive milestone notifications.', 'success');
+    }
+  };
 
   // Initial fetch
   useEffect(() => {
@@ -32,39 +56,47 @@ export const LiveScoreView: React.FC<LiveScoreViewProps> = ({ matchId, onClose }
     });
   }, [matchId]);
 
-  // Realtime subscription
+  // Realtime subscription via Socket.io
   useEffect(() => {
-    const channel = supabase
-      .channel(`live_match_${matchId}`)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'live_matches',
-        filter: `id=eq.${matchId}`,
-      }, (payload: any) => {
-        if (payload.new?.match_data) {
-          setMatch(payload.new.match_data);
-          setLastUpdated(new Date());
-          setIsConnected(true);
-        }
-        if (payload.eventType === 'DELETE') {
-          setError('Match has ended.');
-        }
-      })
-      .subscribe((status: string) => {
-        setIsConnected(status === 'SUBSCRIBED');
-      });
+    import('../utils/socket').then(({ socket }) => {
+        socket.emit('join_match', matchId);
 
-    return () => { supabase.removeChannel(channel); };
-  }, [matchId]);
+        const handleUpdate = (updatedMatch: Match) => {
+            setMatch(updatedMatch);
+            setLastUpdated(new Date());
+            setIsConnected(true);
+        };
 
-  // Fallback polling every 8s
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      const m = await loadLiveScore(matchId);
-      if (m) { setMatch(m); setLastUpdated(new Date()); }
-    }, 8000);
-    return () => clearInterval(interval);
+        const handleConnect = () => setIsConnected(true);
+        const handleDisconnect = () => setIsConnected(false);
+
+        socket.on('match_state_updated', handleUpdate);
+        socket.on('connect', handleConnect);
+        socket.on('disconnect', handleDisconnect);
+        
+        const handleMilestone = (data: { matchId: string; title: string; message: string; type: any }) => {
+            if (data.matchId === matchId) {
+                // If user is following, show a toast!
+                const followedMatches = JSON.parse(localStorage.getItem('followed_matches') || '[]');
+                if (followedMatches.includes(matchId)) {
+                    toast(`${data.title}: ${data.message}`, data.type);
+                    
+                    // Vibrate device if possible
+                    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+                }
+            }
+        };
+        socket.on('match_milestone', handleMilestone);
+
+        setIsConnected(socket.connected);
+
+        return () => {
+            socket.off('match_state_updated', handleUpdate);
+            socket.off('connect', handleConnect);
+            socket.off('disconnect', handleDisconnect);
+            socket.off('match_milestone', handleMilestone);
+        };
+    });
   }, [matchId]);
 
   if (loading) {
@@ -150,6 +182,23 @@ export const LiveScoreView: React.FC<LiveScoreViewProps> = ({ matchId, onClose }
           <WifiOff className="w-3.5 h-3.5 text-red-400 ml-2" />
         )}
       </div>
+
+      {/* Follow Button */}
+      {!isCompleted && (
+        <div className="flex justify-center mb-4">
+            <button
+                onClick={toggleFollow}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold text-sm transition-all shadow-lg border ${
+                    isFollowing 
+                        ? 'bg-blue-600/20 text-blue-300 border-blue-500/50 hover:bg-blue-600/30' 
+                        : 'bg-white/10 text-white border-white/20 hover:bg-white/20'
+                }`}
+            >
+                {isFollowing ? <BellRing className="w-4 h-4 animate-bounce" /> : <Bell className="w-4 h-4" />}
+                {isFollowing ? 'Following Match' : 'Follow for Updates'}
+            </button>
+        </div>
+      )}
 
       <div className="max-w-lg mx-auto px-4 pb-8">
         {/* ARcricinfo Branding */}

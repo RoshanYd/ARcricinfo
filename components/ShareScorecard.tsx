@@ -1,7 +1,8 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import { Match } from '../types';
-import { Download, Share2, Trophy, User } from 'lucide-react';
+import { Download, Share2, Trophy, Tv, Check } from 'lucide-react';
 
 interface ShareScorecardProps {
   match: Match;
@@ -9,6 +10,14 @@ interface ShareScorecardProps {
 
 export const ShareScorecard: React.FC<ShareScorecardProps> = ({ match }) => {
   const cardRef = useRef<HTMLDivElement>(null);
+  const [copiedObs, setCopiedObs] = useState(false);
+
+  const handleCopyBroadcastURL = () => {
+      const url = `${window.location.origin}/?live=${match.id}&broadcast=true`;
+      navigator.clipboard.writeText(url);
+      setCopiedObs(true);
+      setTimeout(() => setCopiedObs(false), 2000);
+  };
 
   const winner = match.winningTeamId
     ? (match.winningTeamId === match.teamA.id ? match.teamA : match.teamB)
@@ -47,6 +56,31 @@ export const ShareScorecard: React.FC<ShareScorecardProps> = ({ match }) => {
     link.download = `${match.teamA.name}_vs_${match.teamB.name}_scorecard.png`;
     link.href = dataUrl;
     link.click();
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!cardRef.current) return;
+    const canvas = await html2canvas(cardRef.current, {
+      backgroundColor: '#1e1b4b', // Provide background for rounded corners
+      scale: 2,
+      useCORS: true,
+    });
+    const dataUrl = canvas.toDataURL('image/png');
+    
+    const pdf = new jsPDF({
+      orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+    
+    const imgProps = pdf.getImageProperties(dataUrl);
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const yPos = (pageHeight - pdfHeight) / 2;
+    
+    pdf.addImage(dataUrl, 'PNG', 0, yPos > 0 ? yPos : 0, pdfWidth, pdfHeight);
+    pdf.save(`${match.teamA.name}_vs_${match.teamB.name}_scorecard.pdf`);
   };
 
   const motm = match.manOfTheMatchId
@@ -112,10 +146,20 @@ export const ShareScorecard: React.FC<ShareScorecardProps> = ({ match }) => {
       </div>
 
       {/* ── Share Buttons ── */}
-      <div className="flex gap-3">
-        <button onClick={handleCapture}
-          className="flex-1 py-3 bg-accent text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg hover:bg-accent/90 transition-colors">
-          {navigator.share ? <><Share2 className="w-4 h-4" /> Share</> : <><Download className="w-4 h-4" /> Download</>}
+      <div className="flex flex-col gap-3">
+        <div className="flex gap-3">
+            <button onClick={handleCapture}
+            className="flex-1 py-3 bg-accent text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg hover:bg-accent/90 transition-colors">
+            {navigator.share ? <><Share2 className="w-4 h-4" /> Share Image</> : <><Download className="w-4 h-4" /> Save Image</>}
+            </button>
+            <button onClick={handleDownloadPDF}
+            className="flex-1 py-3 bg-red-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg hover:bg-red-700 transition-colors">
+            <Download className="w-4 h-4" /> Save PDF
+            </button>
+        </div>
+        <button onClick={handleCopyBroadcastURL}
+          className="w-full py-3 bg-indigo-900 border border-indigo-700 text-indigo-100 font-bold rounded-xl flex items-center justify-center gap-2 shadow-inner hover:bg-indigo-800 transition-colors">
+          {copiedObs ? <><Check className="w-4 h-4 text-green-400" /> Copied OBS URL!</> : <><Tv className="w-4 h-4" /> Copy OBS Broadcast URL</>}
         </button>
       </div>
     </div>

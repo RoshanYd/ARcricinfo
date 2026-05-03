@@ -10,6 +10,7 @@ import {
 
 interface PlayerProfileViewProps {
     player: DBPlayer;
+    allPlayers: DBPlayer[];
     allMatches: Match[];
     onBack: () => void;
     onMatchClick: (match: Match) => void;
@@ -35,9 +36,10 @@ const StatRow = ({ label, value, highlight }: { label: string; value: string | n
 );
 
 export const PlayerProfileView: React.FC<PlayerProfileViewProps> = ({
-    player, allMatches, onBack, onMatchClick
+    player, allPlayers, allMatches, onBack, onMatchClick
 }) => {
-    const [tab, setTab] = useState<'BATTING' | 'BOWLING' | 'FIELDING' | 'MATCHES'>('BATTING');
+    const [tab, setTab] = useState<'BATTING' | 'BOWLING' | 'FIELDING' | 'MATCHES' | 'TROPHIES' | 'H2H'>('BATTING');
+    const [comparePlayerId, setComparePlayerId] = useState<string>('');
 
     const battingAvg = (player.innings_batted - player.not_outs) > 0
         ? (player.total_runs / (player.innings_batted - player.not_outs)).toFixed(2)
@@ -74,7 +76,18 @@ export const PlayerProfileView: React.FC<PlayerProfileViewProps> = ({
         [...m.teamA.players, ...m.teamB.players].some(p => normalizePlayerName(p.name) === normalizedId)
     );
 
-    const tabs = ['BATTING', 'BOWLING', 'FIELDING', 'MATCHES'] as const;
+    const recentForm = playerMatches
+        .sort((a, b) => b.date - a.date)
+        .slice(0, 5)
+        .map(m => {
+            const playerTeam = m.teamA.players.some(p => normalizePlayerName(p.name) === normalizedId) ? m.teamA.id : m.teamB.id;
+            if (!m.winningTeamId) return 'D';
+            return m.winningTeamId === playerTeam ? 'W' : 'L';
+        });
+
+    const tabs = ['BATTING', 'BOWLING', 'FIELDING', 'MATCHES', 'TROPHIES', 'H2H'] as const;
+
+    const comparePlayer = allPlayers.find(p => p.id === comparePlayerId);
 
     return (
         <div className="max-w-4xl mx-auto px-4 py-6 animate-fade-in">
@@ -110,7 +123,23 @@ export const PlayerProfileView: React.FC<PlayerProfileViewProps> = ({
                         {/* Info */}
                         <div className="flex-1">
                             <h1 className="text-3xl font-black text-white mb-1">{player.name}</h1>
-                            <p className="text-blue-300 font-medium mb-3">{player.matches_played} Matches Played</p>
+                            <div className="flex items-center gap-4 mb-4">
+                                <p className="text-blue-300 font-medium">{player.matches_played} Matches Played</p>
+                                {recentForm.length > 0 && (
+                                    <div className="flex items-center gap-1">
+                                        <span className="text-xs text-white/50 uppercase tracking-wider mr-1">Form:</span>
+                                        {recentForm.reverse().map((res, i) => (
+                                            <span key={i} className={`w-5 h-5 rounded flex items-center justify-center text-[10px] font-black ${
+                                                res === 'W' ? 'bg-green-500 text-white' : 
+                                                res === 'L' ? 'bg-red-500 text-white' : 
+                                                'bg-gray-500 text-white'
+                                            }`}>
+                                                {res}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
 
                             {/* Quick stats bar */}
                             <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
@@ -151,7 +180,7 @@ export const PlayerProfileView: React.FC<PlayerProfileViewProps> = ({
                         className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${tab === t ? 'bg-accent text-white shadow-md' : 'text-gray-500 hover:text-gray-800'
                             }`}
                     >
-                        {t === 'BATTING' ? '🏏 Batting' : t === 'BOWLING' ? '🎳 Bowling' : t === 'FIELDING' ? '🤲 Fielding' : '📋 Matches'}
+                        {t === 'BATTING' ? '🏏 Bat' : t === 'BOWLING' ? '🎳 Bowl' : t === 'FIELDING' ? '🤲 Field' : t === 'TROPHIES' ? '🏆 Trophies' : t === 'H2H' ? '⚔️ H2H' : '📋 Match'}
                     </button>
                 ))}
             </div>
@@ -275,6 +304,141 @@ export const PlayerProfileView: React.FC<PlayerProfileViewProps> = ({
                             })}
                         </div>
                     )}
+                </div>
+            )}
+
+            {tab === 'TROPHIES' && (
+                <div className="animate-fade-in space-y-4">
+                    <div className="bg-gradient-to-r from-yellow-50 to-amber-50 rounded-2xl shadow-sm border border-yellow-200/50 p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-black text-xl text-yellow-900 flex items-center gap-2">
+                                <Trophy className="w-6 h-6 text-yellow-600" /> Achievement Trophy Case
+                            </h3>
+                            <span className="bg-yellow-200 text-yellow-800 font-bold px-3 py-1 text-xs rounded-full uppercase tracking-wider">
+                                {badges.length} Unlocked
+                            </span>
+                        </div>
+                        <p className="text-sm text-yellow-800/80 font-medium mb-6">Play more matches and cross statistical milestones to unlock premium badges!</p>
+                        
+                        {badges.length === 0 ? (
+                            <div className="py-12 bg-white/50 rounded-xl text-center border-2 border-dashed border-yellow-200">
+                                <Shield className="w-12 h-12 text-yellow-300 mx-auto mb-3" />
+                                <h4 className="text-lg font-bold text-yellow-800 mb-1">No Badges Yet</h4>
+                                <p className="text-sm text-yellow-600">Start playing and recording matches to earn your first badge!</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {badges.map(b => (
+                                    <div key={b.id} className={`flex items-start gap-4 p-4 rounded-xl shadow-sm border bg-white ${
+                                        b.tier === 'PLATINUM' ? 'border-purple-300 shadow-purple-100' : 
+                                        b.tier === 'GOLD' ? 'border-yellow-400 shadow-yellow-100' : 
+                                        b.tier === 'SILVER' ? 'border-gray-300 shadow-gray-100' : 
+                                        'border-orange-200 shadow-orange-50'
+                                    } hover:-translate-y-1 transition-transform`}>
+                                        <div className={`w-14 h-14 rounded-full flex flex-col items-center justify-center shrink-0 border-2 ${
+                                            b.tier === 'PLATINUM' ? 'bg-gradient-to-br from-purple-100 to-indigo-50 border-purple-300 text-3xl' : 
+                                            b.tier === 'GOLD' ? 'bg-gradient-to-br from-yellow-100 to-amber-50 border-yellow-400 text-3xl' : 
+                                            b.tier === 'SILVER' ? 'bg-gradient-to-br from-gray-100 to-slate-50 border-gray-300 text-3xl' : 
+                                            'bg-gradient-to-br from-orange-100 to-amber-50 border-orange-300 text-3xl'
+                                        }`}>
+                                            {b.icon}
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <h4 className="font-black text-gray-900">{b.label}</h4>
+                                                <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded ${
+                                                    b.tier === 'PLATINUM' ? 'bg-purple-100 text-purple-700' :
+                                                    b.tier === 'GOLD' ? 'bg-yellow-100 text-yellow-700' :
+                                                    b.tier === 'SILVER' ? 'bg-gray-200 text-gray-600' :
+                                                    'bg-orange-100 text-orange-700'
+                                                }`}>{b.tier}</span>
+                                            </div>
+                                            <p className="text-sm font-medium text-gray-500 leading-snug">{b.description}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {tab === 'H2H' && (
+                <div className="animate-fade-in space-y-6">
+                    <div className="bg-gradient-to-r from-gray-900 to-slate-900 rounded-2xl p-6 shadow-xl text-white">
+                        <h3 className="font-black text-2xl flex items-center gap-3 justify-center mb-6">
+                           <User className="w-8 h-8 text-accent" /> Head-to-Head <User className="w-8 h-8 text-blue-500" />
+                        </h3>
+                        
+                        <div className="flex flex-col items-center mb-8">
+                            <label className="text-sm font-bold text-gray-400 mb-2 uppercase tracking-widest">Select Opponent</label>
+                            <select 
+                                value={comparePlayerId} 
+                                onChange={e => setComparePlayerId(e.target.value)}
+                                className="w-full max-w-sm p-3 bg-white/10 border border-white/20 rounded-xl focus:border-accent font-semibold outline-none text-white appearance-none text-center"
+                            >
+                                <option value="" className="text-gray-900">-- Choose Player --</option>
+                                {allPlayers.filter(p => p.id !== player.id).map(p => (
+                                    <option key={p.id} value={p.id} className="text-gray-900">{p.name}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {comparePlayer && (
+                            <div className="grid grid-cols-3 gap-y-6 gap-x-2 text-center animate-fade-in border-t border-white/10 pt-8 relative">
+                                {/* VS Badge */}
+                                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-accent text-white px-3 py-1 rounded-full font-black text-xs shadow-lg uppercase tracking-widest">
+                                    Compare
+                                </div>
+
+                                {/* Header Avatars */}
+                                <div className="flex flex-col items-center gap-2">
+                                    <div className="w-16 h-16 rounded-full bg-accent/20 border-2 border-accent flex items-center justify-center font-black text-xl overflow-hidden shadow-lg shadow-accent/20">
+                                        {player.avatar ? <img src={player.avatar} className="w-full h-full object-cover"/> : initials}
+                                    </div>
+                                    <span className="font-bold text-sm text-accent leading-tight">{player.name}</span>
+                                </div>
+                                <div className="flex items-center justify-center">
+                                    <Zap className="w-8 h-8 text-yellow-500/50" />
+                                </div>
+                                <div className="flex flex-col items-center gap-2">
+                                    <div className="w-16 h-16 rounded-full bg-blue-500/20 border-2 border-blue-500 flex items-center justify-center font-black text-xl overflow-hidden shadow-lg shadow-blue-500/20">
+                                        {comparePlayer.avatar ? <img src={comparePlayer.avatar} className="w-full h-full object-cover"/> : comparePlayer.name.slice(0,2).toUpperCase()}
+                                    </div>
+                                    <span className="font-bold text-sm text-blue-400 leading-tight">{comparePlayer.name}</span>
+                                </div>
+
+                                {/* Stats Rows */}
+                                <div className="col-span-3 text-xs md:text-sm font-bold text-gray-500 uppercase tracking-widest my-2">Career Batting</div>
+                                
+                                <div className="font-black text-xl md:text-2xl">{player.matches_played}</div>
+                                <div className="font-semibold text-gray-400 self-center text-sm">Matches</div>
+                                <div className="font-black text-xl md:text-2xl">{comparePlayer.matches_played}</div>
+
+                                <div className={`font-black text-xl md:text-2xl ${player.total_runs > comparePlayer.total_runs ? 'text-accent' : ''}`}>{player.total_runs}</div>
+                                <div className="font-semibold text-gray-400 self-center text-sm">Runs</div>
+                                <div className={`font-black text-xl md:text-2xl ${comparePlayer.total_runs > player.total_runs ? 'text-blue-400' : ''}`}>{comparePlayer.total_runs}</div>
+
+                                <div className={`font-black text-xl md:text-2xl ${parseFloat(battingAvg) > parseFloat((comparePlayer.innings_batted - comparePlayer.not_outs > 0 ? comparePlayer.total_runs / (comparePlayer.innings_batted - comparePlayer.not_outs) : comparePlayer.total_runs).toFixed(2)) ? 'text-accent' : ''}`}>{battingAvg}</div>
+                                <div className="font-semibold text-gray-400 self-center text-sm">Average</div>
+                                <div className={`font-black text-xl md:text-2xl ${(comparePlayer.innings_batted - comparePlayer.not_outs > 0 ? comparePlayer.total_runs / (comparePlayer.innings_batted - comparePlayer.not_outs) : comparePlayer.total_runs).toFixed(2) > battingAvg ? 'text-blue-400' : ''}`}>{(comparePlayer.innings_batted - comparePlayer.not_outs > 0 ? comparePlayer.total_runs / (comparePlayer.innings_batted - comparePlayer.not_outs) : comparePlayer.total_runs).toFixed(2)}</div>
+
+                                <div className={`font-black text-xl md:text-2xl ${parseFloat(strikeRate) > parseFloat((comparePlayer.total_balls > 0 ? (comparePlayer.total_runs / comparePlayer.total_balls) * 100 : 0).toFixed(1)) ? 'text-accent' : ''}`}>{strikeRate}</div>
+                                <div className="font-semibold text-gray-400 self-center text-sm">Strike Rate</div>
+                                <div className={`font-black text-xl md:text-2xl ${parseFloat((comparePlayer.total_balls > 0 ? (comparePlayer.total_runs / comparePlayer.total_balls) * 100 : 0).toFixed(1)) > parseFloat(strikeRate) ? 'text-blue-400' : ''}`}>{(comparePlayer.total_balls > 0 ? (comparePlayer.total_runs / comparePlayer.total_balls) * 100 : 0).toFixed(1)}</div>
+
+                                <div className="col-span-3 text-xs md:text-sm font-bold text-gray-500 uppercase tracking-widest mt-6 mb-2">Career Bowling</div>
+
+                                <div className={`font-black text-xl md:text-2xl ${player.total_wickets > comparePlayer.total_wickets ? 'text-accent' : ''}`}>{player.total_wickets}</div>
+                                <div className="font-semibold text-gray-400 self-center text-sm">Wickets</div>
+                                <div className={`font-black text-xl md:text-2xl ${comparePlayer.total_wickets > player.total_wickets ? 'text-blue-400' : ''}`}>{comparePlayer.total_wickets}</div>
+
+                                <div className={`font-black text-xl md:text-2xl ${parseFloat(economy) < parseFloat((comparePlayer.balls_bowled > 0 ? comparePlayer.runs_conceded / (comparePlayer.balls_bowled / 6) : 0).toFixed(2)) ? 'text-accent' : ''}`}>{economy}</div>
+                                <div className="font-semibold text-gray-400 self-center text-sm">Economy</div>
+                                <div className={`font-black text-xl md:text-2xl ${parseFloat((comparePlayer.balls_bowled > 0 ? comparePlayer.runs_conceded / (comparePlayer.balls_bowled / 6) : 0).toFixed(2)) < parseFloat(economy) ? 'text-blue-400' : ''}`}>{(comparePlayer.balls_bowled > 0 ? comparePlayer.runs_conceded / (comparePlayer.balls_bowled / 6) : 0).toFixed(2)}</div>
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
         </div>

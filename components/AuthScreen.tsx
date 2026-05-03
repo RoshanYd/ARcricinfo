@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { supabase } from '../utils/supabase';
-import { Trophy, Eye, EyeOff, Mail, Lock, User, ArrowRight, Loader2, CheckCircle, AlertCircle, RotateCcw } from 'lucide-react';
+import { saveProfile } from '../utils/db';
+import { Trophy, Eye, EyeOff, Mail, Lock, User, ArrowRight, Loader2, CheckCircle, AlertCircle, RotateCcw, Phone, Smartphone } from 'lucide-react';
 
-type AuthMode = 'LOGIN' | 'SIGNUP' | 'FORGOT';
+type AuthMode = 'LOGIN' | 'SIGNUP' | 'FORGOT' | 'OTP_VERIFY' | 'RESET_PASSWORD';
+type AuthMethod = 'EMAIL' | 'MOBILE';
 
 interface AuthScreenProps {
     onAuthSuccess: () => void;
@@ -45,19 +47,24 @@ const InputField = ({
     </div>
 );
 
-// ─── Main Component ──────────────────────────────────────────────────────────
 export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess }) => {
     const [mode, setMode] = useState<AuthMode>('LOGIN');
+    const [authMethod, setAuthMethod] = useState<AuthMethod>('MOBILE');
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
+    const [mobile, setMobile] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [otp, setOtp] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
+    
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
     const [successMsg, setSuccessMsg] = useState('');
     const [errors, setErrors] = useState<Record<string, string>>({});
+
+    const [mockOtpValue, setMockOtpValue] = useState<string>('');
 
     const clearState = (newMode: AuthMode) => {
         setMode(newMode);
@@ -66,66 +73,180 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess }) => {
         setErrors({});
         setPassword('');
         setConfirmPassword('');
+        setOtp('');
     };
 
     const validate = () => {
         const newErrors: Record<string, string> = {};
-        if (!email.trim()) newErrors.email = 'Email is required';
-        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) newErrors.email = 'Enter a valid email';
-        if (mode !== 'FORGOT') {
+        
+        if (mode === 'OTP_VERIFY') {
+            if (!otp) newErrors.otp = 'OTP is required';
+            else if (otp !== mockOtpValue) newErrors.otp = 'Invalid OTP';
+            setErrors(newErrors);
+            return Object.keys(newErrors).length === 0;
+        }
+        
+        if (authMethod === 'EMAIL') {
+            if (!email.trim()) newErrors.email = 'Email is required';
+            else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) newErrors.email = 'Enter a valid email';
+        } else {
+            if (!mobile.trim()) newErrors.mobile = 'Mobile is required';
+            else if (!/^\d{10}$/.test(mobile.replace(/[^0-9]/g, ''))) newErrors.mobile = 'Enter a valid 10-digit number';
+        }
+
+        if (mode === 'LOGIN' || mode === 'RESET_PASSWORD' || (mode === 'SIGNUP' && authMethod === 'EMAIL')) {
             if (!password) newErrors.password = 'Password is required';
             else if (password.length < 6) newErrors.password = 'At least 6 characters required';
         }
-        if (mode === 'SIGNUP') {
-            if (!name.trim()) newErrors.name = 'Name is required';
+
+        if (mode === 'SIGNUP' || mode === 'RESET_PASSWORD') {
+            if (mode === 'SIGNUP' && !name.trim()) newErrors.name = 'Name is required';
             if (password !== confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
         }
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const generateMockAuthEmail = () => {
+        return authMethod === 'EMAIL' ? email : `${mobile}@mock-mobile.arcricinfo.com`;
+    };
+
+    const handleSendOTP = async () => {
         if (!validate()) return;
         setLoading(true);
         setErrorMsg('');
         setSuccessMsg('');
 
         try {
+            // Mock OTP generation
+            const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+            setMockOtpValue(generatedOtp);
+            console.log(`MOCK OTP for ${mobile}:`, generatedOtp);
+            
+            // In a real app, you would use supabase.auth.signInWithOtp({ phone: mobile })
+            setTimeout(() => {
+                setLoading(false);
+                setSuccessMsg(`Mock OTP sent to ${mobile}: ${generatedOtp}`);
+                setMode('OTP_VERIFY');
+            }, 800);
+
+        } catch (err: any) {
+            setErrorMsg(err.message || 'Error sending OTP');
+            setLoading(false);
+        }
+    };
+
+    const handleVerifyOTP = async () => {
+        if (!validate()) return;
+        setLoading(true);
+        setErrorMsg('');
+        
+        try {
+            // Mock OTP Verification -> Register or Login
+            const mockEmail = generateMockAuthEmail();
+            
+            if (mode === 'OTP_VERIFY') {
+                // Determine if we were signing up or logging in or resetting password
+                // Since this is mock OTP, we just enforce the signup/login via dummy email
+                
+                // Let's check if the user exists
+                let { error } = await supabase.auth.signInWithPassword({
+                    email: mockEmail,
+                    password: 'MOCK_MOBILE_PASSWORD_2025' // Default secure password for OTP users
+                });
+
+                if (error && error.message.includes('Invalid login credentials')) {
+                    // Sign up the user behind the scenes
+                    const { data, error: signupError } = await supabase.auth.signUp({
+                        email: mockEmail,
+                        password: 'MOCK_MOBILE_PASSWORD_2025',
+                        options: { data: { full_name: name || 'Mobile User' } }
+                    });
+                    
+                    if (signupError) throw signupError;
+                    
+                    if (data.user) {
+                        await saveProfile(data.user.id, {
+                            name: name || 'Mobile User',
+                            email: mockEmail,
+                            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'User')}&background=1e40af&color=fff&size=200`,
+                            mobileNo: mobile
+                        });
+                    }
+                } else if (error) {
+                    throw error;
+                }
+                
+                onAuthSuccess();
+            }
+        } catch (err: any) {
+            setErrorMsg(err.message || 'Error verifying OTP');
+            setLoading(false);
+        }
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        if (mode === 'SIGNUP' && authMethod === 'MOBILE') {
+            return handleSendOTP();
+        }
+        
+        if (mode === 'LOGIN' && authMethod === 'MOBILE' && !password) {
+            // Login with OTP option
+            return handleSendOTP();
+        }
+
+        if (mode === 'OTP_VERIFY') {
+            return handleVerifyOTP();
+        }
+
+        if (!validate()) return;
+        setLoading(true);
+        setErrorMsg('');
+        setSuccessMsg('');
+
+        try {
+            const authEmail = generateMockAuthEmail();
+
             if (mode === 'LOGIN') {
-                const { error } = await supabase.auth.signInWithPassword({ email, password });
+                const { error } = await supabase.auth.signInWithPassword({ email: authEmail, password });
                 if (error) throw error;
                 onAuthSuccess();
             } else if (mode === 'SIGNUP') {
                 const { data, error } = await supabase.auth.signUp({
-                    email,
+                    email: authEmail,
                     password,
                     options: { data: { full_name: name } },
                 });
                 if (error) throw error;
-                // Create profile row immediately
+                
                 if (data.user) {
-                    await supabase.from('user_profiles').upsert({
-                        id: data.user.id,
+                    await saveProfile(data.user.id, {
                         name,
-                        email,
+                        email: authEmail,
                         avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=1e40af&color=fff&size=200`,
-                        updated_at: new Date().toISOString(),
+                        mobileNo: authMethod === 'MOBILE' ? mobile : undefined
                     });
                 }
-                // Email confirmation may or may not be required
+                
                 if (data.session) {
                     onAuthSuccess();
                 } else {
-                    setSuccessMsg('Account created! Check your email to confirm your account, then log in.');
+                    setSuccessMsg('Account created successfully. You can now login.');
                     clearState('LOGIN');
                 }
             } else if (mode === 'FORGOT') {
-                const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                    redirectTo: window.location.origin,
-                });
-                if (error) throw error;
-                setSuccessMsg('Password reset link sent! Check your inbox.');
+                if (authMethod === 'EMAIL') {
+                    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                        redirectTo: window.location.origin,
+                    });
+                    if (error) throw error;
+                    setSuccessMsg('Password reset link sent! Check your inbox.');
+                } else {
+                    // Mobile mock forgot password -> Send OTP
+                    handleSendOTP();
+                }
             }
         } catch (err: unknown) {
             const msg = (err as Error).message || 'Something went wrong. Please try again.';
@@ -141,22 +262,13 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess }) => {
                 background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 40%, #0c2340 70%, #0f172a 100%)',
             }}
         >
-            {/* Animated background orbs */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-600 rounded-full blur-[120px] opacity-20 animate-pulse" />
                 <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-indigo-600 rounded-full blur-[120px] opacity-20 animate-pulse" style={{ animationDelay: '1s' }} />
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-yellow-500 rounded-full blur-[150px] opacity-5" />
-                {/* Cricket field lines (decorative) */}
-                <div className="absolute bottom-0 left-0 right-0 h-64 opacity-5"
-                    style={{
-                        background: 'repeating-linear-gradient(90deg, #fff 0px, transparent 1px, transparent 80px, #fff 80px)',
-                    }}
-                />
             </div>
 
-            {/* Card */}
-            <div className="relative z-10 w-full max-w-md mx-4">
-                {/* Logo / Header */}
+            <div className="relative z-10 w-full max-w-md">
                 <div className="text-center mb-8">
                     <div className="flex items-center justify-center gap-3 mb-4">
                         <div className="relative">
@@ -182,29 +294,31 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess }) => {
                             </p>
                         </div>
                     </div>
-                    <p className="text-slate-400 text-sm">
-                        {mode === 'LOGIN' && 'Welcome back! Sign in to your account.'}
-                        {mode === 'SIGNUP' && 'Create your account and start scoring.'}
-                        {mode === 'FORGOT' && "No worries, we'll send you reset instructions."}
-                    </p>
                 </div>
 
-                {/* Glass card */}
-                <div
-                    className="rounded-2xl p-8 shadow-2xl"
-                    style={{
-                        background: 'rgba(255,255,255,0.04)',
-                        border: '1px solid rgba(255,255,255,0.08)',
-                        backdropFilter: 'blur(20px)',
-                    }}
+                <div className="rounded-2xl p-8 shadow-2xl"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(20px)' }}
                 >
-                    {/* Mode tabs (Login / Signup) */}
-                    {mode !== 'FORGOT' && (
+                    {mode !== 'OTP_VERIFY' && (
+                        <div className="flex bg-white/5 rounded-xl p-1 mb-6 border border-white/5">
+                            {(['MOBILE', 'EMAIL'] as AuthMethod[]).map(m => (
+                                <button key={m} onClick={() => { setAuthMethod(m); setErrors({}); setErrorMsg(''); }}
+                                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 ${authMethod === m
+                                            ? 'bg-white/10 text-white shadow-sm'
+                                            : 'text-slate-400 hover:text-white'
+                                        }`}
+                                >
+                                    {m === 'MOBILE' ? <Smartphone className="w-4 h-4" /> : <Mail className="w-4 h-4" />}
+                                    {m === 'MOBILE' ? 'Mobile' : 'Email'}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+                    {mode !== 'FORGOT' && mode !== 'OTP_VERIFY' && (
                         <div className="flex bg-white/5 rounded-xl p-1 mb-8 border border-white/5">
                             {(['LOGIN', 'SIGNUP'] as AuthMode[]).map(m => (
-                                <button
-                                    key={m}
-                                    onClick={() => clearState(m)}
+                                <button key={m} onClick={() => clearState(m)}
                                     className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all duration-300 ${mode === m
                                             ? 'bg-yellow-400 text-slate-900 shadow-lg shadow-yellow-400/20'
                                             : 'text-slate-400 hover:text-white'
@@ -216,17 +330,12 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess }) => {
                         </div>
                     )}
 
-                    {/* Back button for forgot */}
-                    {mode === 'FORGOT' && (
-                        <button
-                            onClick={() => clearState('LOGIN')}
-                            className="flex items-center gap-2 text-slate-400 hover:text-white text-sm mb-6 transition-colors"
-                        >
+                    {(mode === 'FORGOT' || mode === 'OTP_VERIFY') && (
+                        <button onClick={() => clearState('LOGIN')} className="flex items-center gap-2 text-slate-400 hover:text-white text-sm mb-6 transition-colors">
                             <RotateCcw className="w-4 h-4" /> Back to Sign In
                         </button>
                     )}
 
-                    {/* Success / Error banners */}
                     {successMsg && (
                         <div className="mb-4 p-4 bg-green-500/10 border border-green-500/30 rounded-xl flex items-start gap-3">
                             <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
@@ -240,86 +349,100 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess }) => {
                         </div>
                     )}
 
-                    {/* Form */}
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        {mode === 'SIGNUP' && (
-                            <InputField
-                                id="name" label="Full Name" value={name}
-                                onChange={setName} placeholder="e.g. Virat Kohli"
-                                icon={User} error={errors.name}
-                            />
+                        {mode === 'OTP_VERIFY' ? (
+                            <>
+                                <InputField
+                                    id="otp" label="Enter OTP" type="text" value={otp}
+                                    onChange={setOtp} placeholder="e.g. 123456"
+                                    icon={Lock} error={errors.otp}
+                                />
+                                <p className="text-xs text-yellow-400">Mock OTP sent to console and shown in green banner.</p>
+                            </>
+                        ) : (
+                            <>
+                                {mode === 'SIGNUP' && (
+                                    <InputField
+                                        id="name" label="Full Name" value={name}
+                                        onChange={setName} placeholder="e.g. Virat Kohli"
+                                        icon={User} error={errors.name}
+                                    />
+                                )}
+
+                                {authMethod === 'EMAIL' ? (
+                                    <InputField
+                                        id="email" label="Email Address" type="email" value={email}
+                                        onChange={setEmail} placeholder="you@example.com"
+                                        icon={Mail} error={errors.email}
+                                    />
+                                ) : (
+                                    <InputField
+                                        id="mobile" label="Mobile Number" type="tel" value={mobile}
+                                        onChange={setMobile} placeholder="10-digit mobile number"
+                                        icon={Phone} error={errors.mobile}
+                                    />
+                                )}
+
+                                {(mode === 'LOGIN' && authMethod === 'EMAIL') || (mode === 'SIGNUP' && authMethod === 'EMAIL') ? (
+                                    <InputField
+                                        id="password" label="Password"
+                                        type={showPassword ? 'text' : 'password'}
+                                        value={password} onChange={setPassword}
+                                        placeholder="••••••••"
+                                        icon={Lock} error={errors.password}
+                                        rightElement={
+                                            <button type="button" onClick={() => setShowPassword(p => !p)} className="text-slate-400 hover:text-white transition-colors">
+                                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                            </button>
+                                        }
+                                    />
+                                ) : null}
+
+                                {(mode === 'LOGIN' && authMethod === 'MOBILE') && (
+                                    <div className="flex flex-col gap-2">
+                                        <p className="text-xs text-slate-400">You will receive an OTP to verify your number.</p>
+                                    </div>
+                                )}
+
+                                {mode === 'SIGNUP' && authMethod === 'EMAIL' && (
+                                    <InputField
+                                        id="confirmPassword" label="Confirm Password"
+                                        type={showConfirm ? 'text' : 'password'}
+                                        value={confirmPassword} onChange={setConfirmPassword}
+                                        placeholder="••••••••"
+                                        icon={Lock} error={errors.confirmPassword}
+                                        rightElement={
+                                            <button type="button" onClick={() => setShowConfirm(p => !p)} className="text-slate-400 hover:text-white transition-colors">
+                                                {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                            </button>
+                                        }
+                                    />
+                                )}
+
+                                {mode === 'LOGIN' && (
+                                    <div className="flex justify-end">
+                                        <button type="button" onClick={() => clearState('FORGOT')} className="text-xs text-yellow-400 hover:text-yellow-300 font-medium transition-colors">
+                                            Forgot password?
+                                        </button>
+                                    </div>
+                                )}
+                            </>
                         )}
 
-                        <InputField
-                            id="email" label="Email Address" type="email" value={email}
-                            onChange={setEmail} placeholder="you@example.com"
-                            icon={Mail} error={errors.email}
-                        />
-
-                        {mode !== 'FORGOT' && (
-                            <InputField
-                                id="password" label="Password"
-                                type={showPassword ? 'text' : 'password'}
-                                value={password} onChange={setPassword}
-                                placeholder="••••••••"
-                                icon={Lock}
-                                error={errors.password}
-                                rightElement={
-                                    <button type="button" onClick={() => setShowPassword(p => !p)}
-                                        className="text-slate-400 hover:text-white transition-colors">
-                                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                    </button>
-                                }
-                            />
-                        )}
-
-                        {mode === 'SIGNUP' && (
-                            <InputField
-                                id="confirmPassword" label="Confirm Password"
-                                type={showConfirm ? 'text' : 'password'}
-                                value={confirmPassword} onChange={setConfirmPassword}
-                                placeholder="••••••••"
-                                icon={Lock}
-                                error={errors.confirmPassword}
-                                rightElement={
-                                    <button type="button" onClick={() => setShowConfirm(p => !p)}
-                                        className="text-slate-400 hover:text-white transition-colors">
-                                        {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                    </button>
-                                }
-                            />
-                        )}
-
-                        {mode === 'LOGIN' && (
-                            <div className="flex justify-end">
-                                <button
-                                    type="button"
-                                    onClick={() => clearState('FORGOT')}
-                                    className="text-xs text-yellow-400 hover:text-yellow-300 font-medium transition-colors"
-                                >
-                                    Forgot password?
-                                </button>
-                            </div>
-                        )}
-
-                        {/* Submit button */}
                         <button
-                            type="submit"
-                            disabled={loading}
+                            type="submit" disabled={loading}
                             className="w-full py-3.5 mt-2 rounded-xl font-bold text-slate-900 flex items-center justify-center gap-2 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed active:scale-95"
-                            style={{
-                                background: loading
-                                    ? '#ca8a04'
-                                    : 'linear-gradient(135deg, #facc15 0%, #f59e0b 100%)',
-                                boxShadow: '0 4px 24px rgba(250,204,21,0.25)',
-                            }}
+                            style={{ background: loading ? '#ca8a04' : 'linear-gradient(135deg, #facc15 0%, #f59e0b 100%)', boxShadow: '0 4px 24px rgba(250,204,21,0.25)' }}
                         >
                             {loading ? (
                                 <><Loader2 className="w-5 h-5 animate-spin" /> Please wait...</>
                             ) : (
                                 <>
-                                    {mode === 'LOGIN' && 'Sign In'}
-                                    {mode === 'SIGNUP' && 'Create Account'}
+                                    {mode === 'OTP_VERIFY' && 'Verify & Continue'}
+                                    {mode === 'LOGIN' && authMethod === 'MOBILE' && 'Send OTP'}
+                                    {mode === 'LOGIN' && authMethod === 'EMAIL' && 'Sign In'}
+                                    {mode === 'SIGNUP' && authMethod === 'MOBILE' && 'Send OTP'}
+                                    {mode === 'SIGNUP' && authMethod === 'EMAIL' && 'Create Account'}
                                     {mode === 'FORGOT' && 'Send Reset Link'}
                                     <ArrowRight className="w-4 h-4" />
                                 </>
@@ -327,21 +450,18 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess }) => {
                         </button>
                     </form>
 
-                    {/* Divider + mode switch */}
-                    <div className="mt-6 text-center">
-                        <p className="text-slate-500 text-sm">
-                            {mode === 'LOGIN' ? "Don't have an account? " : 'Already have an account? '}
-                            <button
-                                onClick={() => clearState(mode === 'LOGIN' ? 'SIGNUP' : 'LOGIN')}
-                                className="text-yellow-400 hover:text-yellow-300 font-semibold transition-colors"
-                            >
-                                {mode === 'LOGIN' ? 'Sign up' : 'Sign in'}
-                            </button>
-                        </p>
-                    </div>
+                    {mode !== 'OTP_VERIFY' && (
+                        <div className="mt-6 text-center">
+                            <p className="text-slate-500 text-sm">
+                                {mode === 'LOGIN' ? "Don't have an account? " : 'Already have an account? '}
+                                <button onClick={() => clearState(mode === 'LOGIN' ? 'SIGNUP' : 'LOGIN')} className="text-yellow-400 hover:text-yellow-300 font-semibold transition-colors">
+                                    {mode === 'LOGIN' ? 'Sign up' : 'Sign in'}
+                                </button>
+                            </p>
+                        </div>
+                    )}
                 </div>
 
-                {/* Footer */}
                 <p className="text-center text-slate-600 text-xs mt-6">
                     © 2025 ARcricinfo · Professional Cricket Platform
                 </p>

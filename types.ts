@@ -70,7 +70,7 @@ export interface PersistentTeam {
   id: string;
   name: string;
   logoUrl?: string;
-  roster: string[];
+  roster: any[]; // Supports both legacy strings and new {id, name, avatar, mobileNo} objects
 }
 
 export interface Team {
@@ -161,6 +161,7 @@ export interface UserProfile {
   name: string;
   email: string;
   avatar: string;
+  mobileNo?: string;
 }
 
 // ─── Tournament Types ─────────────────────────────────────────────────────────
@@ -211,4 +212,26 @@ export interface Tournament {
   sponsorName?: string;
   sponsorImage?: string;
   scheduleMode?: 'AUTO' | 'MANUAL';
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  type: 'NEW_CHALLENGE' | 'CHALLENGE_ACCEPTED' | 'SYSTEM';
+  message: string;
+  isRead: boolean;
+  createdAt: number;
+}
+
+export interface CommunityPost {
+  id: string;
+  userId: string;
+  teamName: string;
+  matchType: 'T20' | 'T10' | 'TEST' | 'CUSTOM';
+  location: string;
+  date: number; // timestamp
+  message: string;
+  contactInfo: string;
+  status: 'OPEN' | 'ACCEPTED';
+  createdAt: number;
 }

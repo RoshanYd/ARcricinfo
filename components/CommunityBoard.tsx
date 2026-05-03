@@ -1,59 +1,30 @@
-import React, { useState } from 'react';
-import { Target, Search, MessageSquarePlus, MapPin, Calendar, Users, Activity, Crown } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Target, Search, MessageSquarePlus, MapPin, Calendar, Users, Activity, Crown, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { CommunityPost, MatchStatus, Match } from '../types';
+import { loadCommunityPosts, saveCommunityPost, updatePostStatus, saveNotification, saveMatch } from '../utils/db';
+import { useToast } from './Toast';
 
-export interface ChallengePost {
-  id: string;
-  teamName: string;
-  location: string;
-  date: Date;
-  matchType: 'T20' | 'T10' | 'TEST' | 'CUSTOM';
-  message: string;
-  contactInfo: string;
-  postedAt: Date;
-  status: 'OPEN' | 'ACCEPTED';
+export interface CommunityBoardProps {
+    userProfile: { id: string; name: string } | null;
+    onChallengeAccepted?: () => void;
 }
 
-const mockPosts: ChallengePost[] = [
-  {
-    id: '1',
-    teamName: 'Mumbai Mavericks',
-    location: 'Shivaji Park, Mumbai',
-    date: new Date(Date.now() + 86400000 * 2), // 2 days from now
-    matchType: 'T20',
-    message: 'Looking for a competitive Division A team for a friendly match this weekend. We provide the leather balls.',
-    contactInfo: 'mumbai.mavs@example.com',
-    postedAt: new Date(Date.now() - 3600000 * 5),
-    status: 'OPEN'
-  },
-  {
-    id: '2',
-    teamName: 'Delhi Capitals Local',
-    location: 'Feroz Shah Kotla Grounds (Outer)',
-    date: new Date(Date.now() + 86400000 * 5),
-    matchType: 'T10',
-    message: 'Short format 10-over blast. Looking for opponents to practice big hitting. Entry fee split 50/50 for ground rental.',
-    contactInfo: 'delhi.caps.local@example.com',
-    postedAt: new Date(Date.now() - 86400000 * 1),
-    status: 'OPEN'
-  },
-  {
-    id: '3',
-    teamName: 'Bengaluru Blasters',
-    location: 'Chinnaswamy Nets',
-    date: new Date(Date.now() + 86400000 * 1),
-    matchType: 'CUSTOM',
-    message: 'Need 2 freelance fast bowlers for a corporate tournament tomorrow! DM urgent.',
-    contactInfo: 'freelance.blr@example.com',
-    postedAt: new Date(Date.now() - 3600000 * 12),
-    status: 'ACCEPTED'
-  }
-];
-
-export const CommunityBoard: React.FC = () => {
-  const [posts, setPosts] = useState<ChallengePost[]>(mockPosts);
+export const CommunityBoard: React.FC<CommunityBoardProps> = ({ userProfile, onChallengeAccepted }) => {
+  const [posts, setPosts] = useState<CommunityPost[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [filterType, setFilterType] = useState<'ALL' | 'T20' | 'T10' | 'CUSTOM'>('ALL');
+  const { toast } = useToast();
+
+  useEffect(() => {
+     async function fetchPosts() {
+         const data = await loadCommunityPosts();
+         setPosts(data);
+         setIsLoading(false);
+     }
+     fetchPosts();
+  }, []);
 
   // Form state
   const [teamName, setTeamName] = useState('');
@@ -63,24 +34,42 @@ export const CommunityBoard: React.FC = () => {
   const [message, setMessage] = useState('');
   const [contactInfo, setContactInfo] = useState('');
 
-  const handlePostChallenge = () => {
-    if (!teamName || !location || !date || !message) return;
+  const handlePostChallenge = async () => {
+    if (!userProfile) {
+        toast('You must be logged in to post a challenge.', 'error');
+        return;
+    }
+    if (!teamName || !location || !date || !message) {
+        toast('Please fill out all required fields.', 'error');
+        return;
+    }
 
-    const newPost: ChallengePost = {
+    const newPost: CommunityPost = {
       id: Math.random().toString(36).substr(2, 9),
+      userId: userProfile.id,
       teamName,
       location,
-      date: new Date(date),
+      date: new Date(date).getTime(),
       matchType,
       message,
       contactInfo,
-      postedAt: new Date(),
+      postedAt: Date.now(),
       status: 'OPEN'
+    } as any; // Temporary fix for backwards compatibility
+
+    // Fix the naming convention to match our interface updates
+    const postToSave: CommunityPost = {
+        ...newPost,
+        createdAt: Date.now()
     };
 
-    setPosts([newPost, ...posts]);
+    setPosts([postToSave, ...posts]);
     setIsModalOpen(false);
     
+    // Fire to DB
+    await saveCommunityPost(postToSave);
+    toast('Challenge posted successfully!', 'success');
+
     // Reset Form
     setTeamName('');
     setLocation('');
@@ -88,7 +77,59 @@ export const CommunityBoard: React.FC = () => {
     setContactInfo('');
   };
 
+  const handleAcceptChallenge = async (post: CommunityPost) => {
+      if (!userProfile) {
+          toast('You must be logged in to accept challenges.', 'error');
+          return;
+      }
+      if (post.userId === userProfile.id) {
+          toast('You cannot accept your own challenge.', 'error');
+          return;
+      }
+
+      // Optimistic update
+      setPosts(posts.map(p => p.id === post.id ? { ...p, status: 'ACCEPTED' } : p));
+      
+      // Update DB Status
+      await updatePostStatus(post.id, 'ACCEPTED');
+
+      // Send a notification to the original post creator
+      await saveNotification({
+          id: crypto.randomUUID(),
+          userId: post.userId,
+          type: 'CHALLENGE_ACCEPTED',
+          message: `${userProfile.name} has accepted your ${post.matchType} challenge in ${post.location}! Contact them to finalize details.`,
+          isRead: false,
+          createdAt: Date.now()
+      });
+      
+      // Create a Scheduled Match for BOTH the acceptor and creator
+      const newMatch: Match = {
+          id: crypto.randomUUID(),
+          date: post.date,
+          status: MatchStatus.SCHEDULED,
+          totalOvers: post.matchType === 'T20' ? 20 : post.matchType === 'T10' ? 10 : 0,
+          teamA: { id: crypto.randomUUID(), name: post.teamName, isBatting: false, totalRuns: 0, wickets: 0, overs: 0, extras: 0, superOverRuns: 0, superOverWickets: 0, superOverBalls: 0, players: [] },
+          teamB: { id: crypto.randomUUID(), name: "Opponent (You)", isBatting: false, totalRuns: 0, wickets: 0, overs: 0, extras: 0, superOverRuns: 0, superOverWickets: 0, superOverBalls: 0, players: [] },
+          currentInnings: 1,
+          balls: [],
+      };
+      
+      await saveMatch(userProfile.id, newMatch);
+      await saveMatch(post.userId, newMatch);
+
+      toast('Challenge accepted! Scheduled match generated on your dashboard!', 'success');
+      
+      if (onChallengeAccepted) {
+          onChallengeAccepted();
+      }
+  };
+
   const filteredPosts = filterType === 'ALL' ? posts : posts.filter(p => p.matchType === filterType);
+
+  if (isLoading) {
+      return <div className="flex flex-col items-center justify-center py-20 text-accent"><Loader2 className="w-10 h-10 animate-spin mb-4" /><p className="font-bold">Loading community posts...</p></div>;
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 animate-fade-in">
@@ -151,11 +192,19 @@ export const CommunityBoard: React.FC = () => {
                      </p>
 
                      <div className="flex items-center justify-between">
-                         <span className="text-xs text-gray-400 font-medium">Posted {format(post.postedAt, 'MMM d')}</span>
+                         <span className="text-xs text-gray-400 font-medium">Posted {format(post.createdAt || post.postedAt, 'MMM d')}</span>
                          {post.status === 'OPEN' && (
-                            <a href={`mailto:${post.contactInfo}`} className="px-4 py-2 bg-gradient-to-r from-blue-600 to-accent text-white text-xs font-bold rounded-lg shadow-md hover:shadow-lg transition-all active:scale-95">
-                                Connect / Accept
-                            </a>
+                            <button 
+                                onClick={() => handleAcceptChallenge(post)}
+                                className={`px-4 py-2 text-xs font-bold rounded-lg shadow-md hover:shadow-lg transition-all active:scale-95 ${
+                                    userProfile && post.userId === userProfile.id 
+                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                                    : 'bg-gradient-to-r from-blue-600 to-accent text-white'
+                                }`}
+                                disabled={userProfile && post.userId === userProfile.id}
+                            >
+                                {userProfile && post.userId === userProfile.id ? 'Your Post' : 'Connect / Accept'}
+                            </button>
                          )}
                      </div>
                  </div>
@@ -203,18 +252,18 @@ export const CommunityBoard: React.FC = () => {
                         <input type="text" value={location} onChange={e => setLocation(e.target.value)} className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-accent font-semibold outline-none" placeholder="e.g. Shivaji Park, Ground B" />
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wider">Message Details</label>
-                        <textarea value={message} onChange={e => setMessage(e.target.value)} rows={3} className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-accent font-semibold outline-none text-sm resize-none" placeholder="Tell opponents about entry fees, skill level needed, or ball types..."></textarea>
+                        <label className="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wider dark:text-gray-300">Message Details</label>
+                        <textarea value={message} onChange={e => setMessage(e.target.value)} rows={3} className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-accent font-semibold outline-none text-sm resize-none dark:bg-gray-800 dark:border-gray-600 dark:text-white" placeholder="Tell opponents about entry fees, skill level needed, or ball types..."></textarea>
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wider">Contact Info</label>
-                        <input type="text" value={contactInfo} onChange={e => setContactInfo(e.target.value)} className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-accent font-semibold outline-none" placeholder="Email or Phone number" />
+                        <label className="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wider dark:text-gray-300">Contact Info</label>
+                        <input type="text" value={contactInfo} onChange={e => setContactInfo(e.target.value)} className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-accent font-semibold outline-none dark:bg-gray-800 dark:border-gray-600 dark:text-white" placeholder="Email or Phone number" />
                     </div>
                 </div>
 
                 <div className="flex gap-3 mt-8">
-                    <button onClick={() => setIsModalOpen(false)} className="flex-1 py-3 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition-colors">Cancel</button>
-                    <button onClick={handlePostChallenge} className="flex-1 py-3 bg-accent text-white font-black rounded-xl shadow-lg shadow-accent/20 hover:bg-accent/90 transition-colors">Confirm Post</button>
+                    <button onClick={() => setIsModalOpen(false)} className="flex-1 py-3 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition-colors dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600">Cancel</button>
+                    <button onClick={handlePostChallenge} className="flex-1 py-3 bg-accent text-white font-black rounded-xl shadow-lg shadow-accent/20 hover:bg-accent/90 transition-colors dark:shadow-none">Confirm Post</button>
                 </div>
             </div>
         </div>

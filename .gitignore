@@ -22,3 +22,31 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*
+
+# Secrets & Keys
+*.pem
+*.key
+*.cert
+*.crt
+secret.json
+service-account.json
+
+# Build outputs
+build/
+dist/
+dist-ssr/
+
+# SQLite / Database
+*.sqlite
+*.sqlite3
+*.db
+*.db3
+database.sqlite

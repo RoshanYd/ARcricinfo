@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Team, Player, UserProfile, PersistentTeam } from '../types';
 import { createTeam, createPlayer } from '../utils/cricketLogic';
 import { DBPlayer } from '../utils/db';
 import { PlayerAutosuggestInput } from './PlayerAutosuggestInput';
-import { Users, UserPlus, PlayCircle, Trash2, Crown, User, X, Minus, Plus, Bookmark } from 'lucide-react';
+import { Users, UserPlus, PlayCircle, Trash2, Crown, User, X, Minus, Plus, Bookmark, Calendar } from 'lucide-react';
 import { useToast } from './Toast';
 
 interface MatchSetupProps {
@@ -430,37 +429,37 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({ onMatchCreate, onSchedul
               </div>
            </div>
 
-           <div className="flex flex-col md:flex-row justify-between pt-6 border-t border-gray-200 mt-4 gap-4">
+            <div className="flex flex-col md:flex-row justify-between pt-6 border-t border-gray-200 dark:border-slate-700 mt-4 gap-4">
              <button
               onClick={() => setStep(1)}
-              className="px-6 md:px-8 py-3 text-gray-600 font-bold hover:text-accent hover:bg-gray-100 rounded-lg transition-colors text-sm md:text-base self-start"
+              className="px-6 md:px-8 py-3 text-gray-600 dark:text-gray-300 font-bold hover:text-accent dark:hover:text-accent hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-sm md:text-base self-start"
             >
               Back
             </button>
             <div className="flex flex-col sm:flex-row gap-3">
               {onScheduleMatch && (
-                  <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-xl border border-gray-200">
+                  <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-xl border border-gray-200 dark:bg-slate-800 dark:border-slate-700">
                       {showScheduleInput ? (
                           <>
                               <input 
                                   type="datetime-local" 
                                   value={scheduleDate}
                                   onChange={e => setScheduleDate(e.target.value)}
-                                  className="p-2 border border-gray-300 rounded-lg text-sm outline-none"
+                                  className="p-2 border border-gray-300 rounded-lg text-sm outline-none dark:bg-slate-900 dark:border-slate-600 dark:text-white"
                               />
-                              <button onClick={handleSchedule} className="px-4 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 text-sm">
-                                  Confirm
+                              <button onClick={handleSchedule} className="px-4 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 text-sm active:scale-95 transition-transform flex items-center gap-1 shadow-md">
+                                  Confirm <Bookmark className="w-3.5 h-3.5" />
                               </button>
-                              <button onClick={() => setShowScheduleInput(false)} className="px-2 text-gray-500 hover:text-red-500">
-                                  <X className="w-4 h-4" />
+                              <button onClick={() => setShowScheduleInput(false)} className="px-2 text-gray-500 hover:text-red-500 transition-colors">
+                                  <X className="w-5 h-5" />
                               </button>
                           </>
                       ) : (
                           <button
                               onClick={() => setShowScheduleInput(true)}
-                              className="px-4 md:px-6 py-3 bg-white text-indigo-600 border border-indigo-200 rounded-xl font-bold hover:bg-indigo-50 transition-all flex items-center gap-2"
+                              className="px-4 md:px-6 py-3 bg-white text-indigo-600 border border-indigo-200 rounded-xl font-bold hover:bg-indigo-50 transition-all flex items-center gap-2 shadow-sm dark:bg-indigo-900/30 dark:border-indigo-800 dark:text-indigo-300 dark:hover:bg-indigo-900/50"
                           >
-                              Schedule Match <Bookmark className="w-4 h-4" />
+                              Schedule Match <Calendar className="w-4 h-4" />
                           </button>
                       )}
                   </div>

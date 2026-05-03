@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
-import { Match, Series, PersistentTeam } from '../types';
-import { extractPlayerStatsFromMatch, aggregateCareerStats, normalizePlayerName, CareerStats, PlayerMatchStats } from './playerStats';
+import { socket, BACKEND_URL } from './socket';
+import { Match, Series, PersistentTeam, CommunityPost, Notification } from '../types';
+import { extractPlayerStatsFromMatch, aggregateCareerStats, CareerStats, PlayerMatchStats } from './playerStats';
 
 // ─── User Profile ────────────────────────────────────────────────────────────
 
@@ -9,155 +10,147 @@ export interface DBUserProfile {
     name: string;
     email: string;
     avatar: string;
+    mobile_no?: string;
 }
 
 export async function loadProfile(userId: string): Promise<DBUserProfile | null> {
-    const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-    if (error || !data) return null;
-    return data as DBUserProfile;
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/profile?userId=${userId}`);
+        if (!res.ok) return null;
+        return await res.json();
+    } catch { return null; }
 }
 
-export async function saveProfile(userId: string, profile: { name: string; email: string; avatar: string }) {
-    const { error } = await supabase
-        .from('user_profiles')
-        .upsert({ id: userId, ...profile, updated_at: new Date().toISOString() });
-    if (error) console.error('Error saving profile:', error.message);
+export async function saveProfile(userId: string, profile: { name: string; email: string; avatar: string; mobileNo?: string }) {
+    try {
+        await fetch(`${BACKEND_URL}/api/profile`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, profile })
+        });
+    } catch (e: any) { console.error('Error saving profile:', e.message); }
+}
+
+export async function loadProfileByMobile(mobileNo: string): Promise<DBUserProfile | null> {
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/profile/by-mobile/${mobileNo}`);
+        if (!res.ok) return null;
+        return await res.json();
+    } catch { return null; }
 }
 
 // ─── Matches ─────────────────────────────────────────────────────────────────
 
 export async function loadMatches(userId: string): Promise<Match[]> {
-    const { data, error } = await supabase
-        .from('matches')
-        .select('data')
-        .eq('user_id', userId)
-        .order('date', { ascending: false });
-    if (error || !data) return [];
-    return data.map((row: { data: Match }) => row.data);
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/matches?userId=${userId}`);
+        if (!res.ok) return [];
+        return await res.json();
+    } catch { return []; }
 }
 
 export async function saveMatch(userId: string, match: Match) {
-    const { error } = await supabase
-        .from('matches')
-        .upsert({ id: match.id, user_id: userId, data: match, date: match.date });
-    if (error) console.error('Error saving match:', error.message);
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/match`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, match })
+        });
+        if (!res.ok) throw new Error('API Error');
+    } catch (error: any) {
+        console.error('Error saving match via REST:', error.message);
+    }
 }
 
 export async function deleteMatch(matchId: string) {
-    const { error } = await supabase
-        .from('matches')
-        .delete()
-        .eq('id', matchId);
-    if (error) console.error('Error deleting match:', error.message);
+    try {
+        await fetch(`${BACKEND_URL}/api/match/${matchId}`, { method: 'DELETE' });
+    } catch (e: any) { console.error('Error deleting match:', e.message); }
 }
 
 export async function deleteTournament(tournamentId: string) {
-    const { error } = await supabase
-        .from('tournaments')
-        .delete()
-        .eq('id', tournamentId);
-    if (error) console.error('Error deleting tournament:', error.message);
+    try {
+        await fetch(`${BACKEND_URL}/api/tournament/${tournamentId}`, { method: 'DELETE' });
+    } catch (e: any) { console.error('Error deleting tournament:', e.message); }
 }
 
 // ─── Series ──────────────────────────────────────────────────────────────────
 
 export async function loadActiveSeries(userId: string): Promise<Series | null> {
-    const { data, error } = await supabase
-        .from('series')
-        .select('data')
-        .eq('user_id', userId)
-        .eq('status', 'ACTIVE')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-    if (error || !data) return null;
-    return (data as { data: Series }).data;
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/series/active?userId=${userId}`);
+        if (!res.ok) return null;
+        return await res.json();
+    } catch { return null; }
 }
 
 export async function loadCompletedSeries(userId: string): Promise<Series[]> {
-    const { data, error } = await supabase
-        .from('series')
-        .select('data')
-        .eq('user_id', userId)
-        .eq('status', 'COMPLETED')
-        .order('created_at', { ascending: false });
-    if (error || !data) return [];
-    return data.map((row: { data: Series }) => row.data);
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/series/completed?userId=${userId}`);
+        if (!res.ok) return [];
+        return await res.json();
+    } catch { return []; }
 }
 
 export async function saveSeries(userId: string, series: Series) {
-    const { error } = await supabase
-        .from('series')
-        .upsert({
-            id: series.id,
-            user_id: userId,
-            data: series,
-            status: series.status,
+    try {
+        await fetch(`${BACKEND_URL}/api/series`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, series })
         });
-    if (error) console.error('Error saving series:', error.message);
+    } catch (e: any) { console.error('Error saving series:', e.message); }
 }
 
 export async function deleteActiveSeries(seriesId: string) {
-    const { error } = await supabase
-        .from('series')
-        .update({ status: 'COMPLETED' })
-        .eq('id', seriesId);
-    if (error) console.error('Error updating series status:', error.message);
+    try {
+        await fetch(`${BACKEND_URL}/api/series/${seriesId}/complete`, { method: 'PUT' });
+    } catch (e: any) { console.error('Error updating series status:', e.message); }
 }
 
 // ─── Teams ───────────────────────────────────────────────────────────────────
 
 export async function loadTeams(userId: string): Promise<PersistentTeam[]> {
-    const { data, error } = await supabase
-        .from('teams')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
-    if (error || !data) return [];
-    
-    return data.map(row => ({
-        id: row.id,
-        name: row.name,
-        logoUrl: row.logo_url,
-        roster: row.roster || []
-    }));
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/teams?userId=${userId}`);
+        if (!res.ok) return [];
+        return await res.json();
+    } catch { return []; }
 }
 
 export async function saveTeam(userId: string, team: PersistentTeam) {
-    const { error } = await supabase
-        .from('teams')
-        .upsert({ 
-            id: team.id, 
-            user_id: userId, 
-            name: team.name,
-            logo_url: team.logoUrl || null,
-            roster: team.roster,
-            updated_at: new Date().toISOString()
+    try {
+        await fetch(`${BACKEND_URL}/api/team`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, team })
         });
-    if (error) console.error('Error saving team:', error.message);
+    } catch (e: any) { console.error('Error saving team:', e.message); }
 }
 
 export async function deleteTeam(teamId: string) {
-    const { error } = await supabase
-        .from('teams')
-        .delete()
-        .eq('id', teamId);
-    if (error) console.error('Error deleting team:', error.message);
+    try {
+        await fetch(`${BACKEND_URL}/api/team/${teamId}`, { method: 'DELETE' });
+    } catch (e: any) { console.error('Error deleting team:', e.message); }
 }
 
+export async function joinTeam(teamId: string, profile: { id: string, name: string, avatar: string, mobileNo?: string }) {
+    try {
+        await fetch(`${BACKEND_URL}/api/team/${teamId}/join`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ profile })
+        });
+    } catch (e: any) { console.error('Error joining team:', e.message); }
+}
 
 // ─── Players ──────────────────────────────────────────────────────────────────
 
 export interface DBPlayer {
-    id: string;         // normalized name key
+    id: string; // normalized name key
     user_id: string;
     name: string;
     avatar?: string;
-    // Batting
     matches_played: number;
     innings_batted: number;
     total_runs: number;
@@ -168,7 +161,6 @@ export interface DBPlayer {
     hundreds: number;
     highest_score: number;
     not_outs: number;
-    // Bowling
     innings_bowled: number;
     total_wickets: number;
     balls_bowled: number;
@@ -177,16 +169,13 @@ export interface DBPlayer {
     five_fors: number;
     best_bowling_wickets: number;
     best_bowling_runs: number;
-    // Fielding
     catches: number;
     run_outs: number;
     stumpings: number;
     updated_at: string;
 }
 
-/** Rebuild all player stats from the full match history and sync to Supabase */
 export async function syncPlayersFromMatches(userId: string, allMatches: Match[]) {
-    // Collect all performances per player (by normalized name)
     const playerPerformances: Record<string, { performances: ReturnType<typeof extractPlayerStatsFromMatch>[0][], name: string, avatar?: string }> = {};
 
     allMatches.forEach(match => {
@@ -206,59 +195,35 @@ export async function syncPlayersFromMatches(userId: string, allMatches: Match[]
     Object.entries(playerPerformances).forEach(([id, { performances, name, avatar }]) => {
         const stats = aggregateCareerStats(performances);
         upsertRows.push({
-            id,
-            user_id: userId,
-            name,
-            avatar,
-            matches_played: stats.matchesPlayed,
-            innings_batted: stats.inningsBatted,
-            total_runs: stats.totalRuns,
-            total_balls: stats.totalBalls,
-            fours: stats.fours,
-            sixes: stats.sixes,
-            fifties: stats.fifties,
-            hundreds: stats.hundreds,
-            highest_score: stats.highestScore,
-            not_outs: stats.notOuts,
-            innings_bowled: stats.inningsBowled,
-            total_wickets: stats.totalWickets,
-            balls_bowled: stats.ballsBowled,
-            runs_conceded: stats.runsConceded,
-            four_fors: stats.fourFors,
-            five_fors: stats.fiveFors,
-            best_bowling_wickets: stats.bestBowlingWickets,
-            best_bowling_runs: stats.bestBowlingRuns,
-            catches: stats.catches,
-            run_outs: stats.runOuts,
-            stumpings: stats.stumpings,
-            updated_at: new Date().toISOString(),
+            id, user_id: userId, name, avatar,
+            matches_played: stats.matchesPlayed, innings_batted: stats.inningsBatted, total_runs: stats.totalRuns, total_balls: stats.totalBalls, fours: stats.fours, sixes: stats.sixes, fifties: stats.fifties, hundreds: stats.hundreds, highest_score: stats.highestScore, not_outs: stats.notOuts, innings_bowled: stats.inningsBowled, total_wickets: stats.totalWickets, balls_bowled: stats.ballsBowled, runs_conceded: stats.runsConceded, four_fors: stats.fourFors, five_fors: stats.fiveFors, best_bowling_wickets: stats.bestBowlingWickets, best_bowling_runs: stats.bestBowlingRuns, catches: stats.catches, run_outs: stats.runOuts, stumpings: stats.stumpings, updated_at: new Date().toISOString(),
         });
     });
 
     if (upsertRows.length === 0) return;
-    const { error } = await supabase.from('players').upsert(upsertRows);
-    if (error) console.error('Error syncing players:', error.message);
+    try {
+        await fetch(`${BACKEND_URL}/api/players/sync`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ upsertRows })
+        });
+    } catch (e: any) { console.error('Error syncing players:', e.message); }
 }
 
 export async function loadAllPlayers(userId: string): Promise<DBPlayer[]> {
-    const { data, error } = await supabase
-        .from('players')
-        .select('*')
-        .eq('user_id', userId)
-        .order('total_runs', { ascending: false });
-    if (error || !data) return [];
-    return data as DBPlayer[];
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/players?userId=${userId}`);
+        if (!res.ok) throw new Error('API Error');
+        return await res.json();
+    } catch (e) { return []; }
 }
 
 export async function loadPlayerById(userId: string, playerId: string): Promise<DBPlayer | null> {
-    const { data, error } = await supabase
-        .from('players')
-        .select('*')
-        .eq('id', playerId)
-        .eq('user_id', userId)
-        .single();
-    if (error || !data) return null;
-    return data as DBPlayer;
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/player/${playerId}?userId=${userId}`);
+        if (!res.ok) return null;
+        return await res.json();
+    } catch { return null; }
 }
 
 // ─── Tournaments ──────────────────────────────────────────────────────────────
@@ -266,47 +231,93 @@ export async function loadPlayerById(userId: string, playerId: string): Promise<
 import { Tournament } from '../types';
 
 export async function saveTournament(userId: string, tournament: Tournament) {
-    const { error } = await supabase
-        .from('tournaments')
-        .upsert({ id: tournament.id, user_id: userId, data: tournament, status: tournament.status });
-    if (error) console.error('Error saving tournament:', error.message);
+    try {
+        await fetch(`${BACKEND_URL}/api/tournament`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, tournament })
+        });
+    } catch (e: any) { console.error('Error saving tournament:', e.message); }
 }
 
 export async function loadTournaments(userId: string): Promise<Tournament[]> {
-    const { data, error } = await supabase
-        .from('tournaments')
-        .select('data')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
-    if (error || !data) return [];
-    return data.map((row: { data: Tournament }) => row.data);
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/tournaments?userId=${userId}`);
+        if (!res.ok) return [];
+        return await res.json();
+    } catch { return []; }
 }
 
-// ─── Live Match Score (Public) ────────────────────────────────────────────────\n
+// ─── Live Match Score (Public) ────────────────────────────────────────────────
+
 export async function pushLiveScore(matchId: string, userId: string, matchData: Match) {
-    const snapshot = {
-        id: matchId,
-        user_id: userId,
-        match_data: matchData,
-        updated_at: new Date().toISOString(),
-    };
-    const { error } = await supabase
-        .from('live_matches')
-        .upsert(snapshot, { onConflict: 'id' });
-    if (error) console.error('Error pushing live score:', error.message);
+    socket.emit('push_score_update', { matchId, matchData, userId });
 }
 
 export async function loadLiveScore(matchId: string): Promise<Match | null> {
-    const { data, error } = await supabase
-        .from('live_matches')
-        .select('match_data')
-        .eq('id', matchId)
-        .single();
-    if (error || !data) return null;
-    return data.match_data as Match;
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/live/${matchId}`);
+        if (!res.ok) return null;
+        return await res.json();
+    } catch { return null; }
 }
 
 export async function removeLiveScore(matchId: string) {
-    await supabase.from('live_matches').delete().eq('id', matchId);
+    try {
+        await fetch(`${BACKEND_URL}/api/live/${matchId}`, { method: 'DELETE' });
+    } catch (e: any) { console.error('Error removing live score:', e.message); }
 }
 
+// ─── Community Posts & Notifications ─────────────────────────────────────
+
+export async function loadCommunityPosts(): Promise<CommunityPost[]> {
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/community`);
+        if (!res.ok) return [];
+        return await res.json();
+    } catch { return []; }
+}
+
+export async function saveCommunityPost(post: CommunityPost) {
+    try {
+        await fetch(`${BACKEND_URL}/api/community`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ post })
+        });
+    } catch (e: any) { console.error('Error saving post:', e.message); }
+}
+
+export async function updatePostStatus(postId: string, status: 'OPEN' | 'ACCEPTED') {
+    try {
+        await fetch(`${BACKEND_URL}/api/community/${postId}/status`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status })
+        });
+    } catch (e: any) { console.error('Error updating post status:', e.message); }
+}
+
+export async function loadNotifications(userId: string): Promise<Notification[]> {
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/notifications?userId=${userId}`);
+        if (!res.ok) return [];
+        return await res.json();
+    } catch { return []; }
+}
+
+export async function saveNotification(notification: Notification) {
+    try {
+        await fetch(`${BACKEND_URL}/api/notification`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ notification })
+        });
+    } catch (e: any) { console.error('Error saving notification:', e.message); }
+}
+
+export async function markNotificationRead(notificationId: string) {
+    try {
+        await fetch(`${BACKEND_URL}/api/notification/${notificationId}/read`, { method: 'PUT' });
+    } catch (e: any) { console.error('Error logging notification read:', e.message); }
+}
