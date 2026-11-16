@@ -4,6 +4,7 @@ import { Match } from '../types';
 import { PlayerProfileView } from './PlayerProfileView';
 import { Loader2, AlertCircle, Share2, Home } from 'lucide-react';
 import { useToast } from './Toast';
+import { BACKEND_URL } from '../utils/socket';
 
 export const PublicProfileView: React.FC<{ playerId: string }> = ({ playerId }) => {
     const [player, setPlayer] = useState<DBPlayer | null>(null);
@@ -15,7 +16,7 @@ export const PublicProfileView: React.FC<{ playerId: string }> = ({ playerId }) 
     useEffect(() => {
         const fetchPublicProfile = async () => {
             try {
-                const res = await fetch(`http://localhost:4000/api/public/player/${playerId}`);
+                const res = await fetch(`${BACKEND_URL}/api/public/player/${playerId}`);
                 if (!res.ok) throw new Error('Player not found or profile is private.');
                 const data = await res.json();
                 setPlayer(data.player);

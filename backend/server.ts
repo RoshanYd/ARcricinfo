@@ -31,6 +31,10 @@ app.get('/', (req, res) => {
   res.send({ status: 'ARcricinfo Backend Online', version: '1.0.0' });
 });
 
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', uptime: process.uptime(), timestamp: Date.now() });
+});
+
 // Implement REST endpoints mimicking frontend `utils/db.ts`
 app.get('/api/players', async (req, res) => {
     try {

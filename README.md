@@ -71,7 +71,14 @@ VITE_SUPABASE_ANON_KEY="your-anon-key"
 npm run dev
 ```
 
-Visit `http://localhost:5173` to see ARcricinfo in action.
+Visit `http://localhost:3001` to see ARcricinfo in action.
+
+---
+
+## 🌐 100% Free Production Deployment
+
+For complete, zero-cost production deployment instructions with WebSockets, PWA, and Database:
+👉 **See [DEPLOY_FREE.md](./DEPLOY_FREE.md)** (Ready for 1-Click Deploy on Vercel & Render).
 
 ---
 

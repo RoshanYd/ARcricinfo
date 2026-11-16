@@ -1,0 +1,47 @@
+# ─── Render Blueprint (100% Strictly Free Tier) ─────────────────────────────
+# Automatically deploys both Frontend and Backend on Render's free tier.
+# Just connect your GitHub repo at https://dashboard.render.com/blueprints
+
+services:
+  # ── Backend Web Service (Node.js + WebSockets / Socket.io) ────────────────
+  - type: web
+    name: arcricinfo-backend
+    env: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+
+  # ── Frontend Static Site (React + Vite SPA) ────────────────────────────────
+  - type: web
+    name: arcricinfo-frontend
+    env: static
+    plan: free
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    autoDeploy: true
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
+      - key: VITE_BACKEND_URL
+        fromService:
+          type: web
+          name: arcricinfo-backend
+          property: host
