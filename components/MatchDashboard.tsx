@@ -555,38 +555,38 @@ export const MatchDashboard: React.FC<DashboardProps> = ({ match, onPlayerUpdate
 
         {/* Current Batsmen */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div className={`p-4 rounded-xl border-2 transition-all ${striker ? 'border-accent bg-blue-50/50' : 'border-dashed border-gray-300'}`}>
+          <div className={`p-4 rounded-xl border-2 transition-all ${striker ? 'border-accent bg-accent/10 dark:bg-accent/25 shadow-sm' : 'border-dashed border-gray-300 dark:border-slate-700'}`}>
             <div className="flex justify-between items-center mb-2">
                <span className="flex items-center gap-2 font-bold text-accent">
                    <PlayerAvatar player={striker || {name: '', avatar: ''} as any} />
-                   {striker ? striker.name : 'Select Striker'}
-                   <span className="bg-accent text-white text-[10px] px-1.5 py-0.5 rounded font-bold">STR</span>
-                   {striker?.isCaptain && <Crown className="w-3 h-3 text-yellow-500 fill-current" />}
+                   <span className="truncate">{striker ? striker.name : 'Select Striker'}</span>
+                   <span className="bg-accent text-white text-[10px] px-1.5 py-0.5 rounded font-bold shrink-0">STR</span>
+                   {striker?.isCaptain && <Crown className="w-3.5 h-3.5 text-amber-500 fill-amber-500 shrink-0" />}
                </span>
             </div>
             {striker && (
                 <div className="flex justify-between items-end">
-                    <div className="text-3xl font-black text-gray-800">{getPlayerRuns(striker)} <span className="text-sm font-medium text-gray-500">({getPlayerBalls(striker)})</span></div>
-                    <div className="text-xs font-bold text-gray-400">
-                        4s: <span className="text-gray-700">{getPlayerFours(striker)}</span> • 6s: <span className="text-gray-700">{getPlayerSixes(striker)}</span> • SR: {calculateStrikeRate(getPlayerRuns(striker), getPlayerBalls(striker))}
+                    <div className="text-3xl font-black text-gray-900 dark:text-white">{getPlayerRuns(striker)} <span className="text-sm font-medium text-gray-500 dark:text-gray-400">({getPlayerBalls(striker)})</span></div>
+                    <div className="text-xs font-bold text-gray-500 dark:text-gray-400">
+                        4s: <span className="text-gray-900 dark:text-white font-bold">{getPlayerFours(striker)}</span> • 6s: <span className="text-gray-900 dark:text-white font-bold">{getPlayerSixes(striker)}</span> • SR: {calculateStrikeRate(getPlayerRuns(striker), getPlayerBalls(striker))}
                     </div>
                 </div>
             )}
           </div>
 
-          <div className={`p-4 rounded-xl border-2 transition-all ${nonStriker ? 'border-gray-200 bg-white' : 'border-dashed border-gray-300'}`}>
+          <div className={`p-4 rounded-xl border-2 transition-all ${nonStriker ? 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 shadow-sm' : 'border-dashed border-gray-300 dark:border-slate-700'}`}>
             <div className="flex justify-between items-center mb-2">
-               <span className="flex items-center gap-2 font-bold text-gray-600">
+               <span className="flex items-center gap-2 font-bold text-gray-700 dark:text-gray-200">
                    <PlayerAvatar player={nonStriker || {name: '', avatar: ''} as any} />
-                   {nonStriker ? nonStriker.name : 'Select Non-Striker'}
-                   {nonStriker?.isCaptain && <Crown className="w-3 h-3 text-yellow-500 fill-current" />}
+                   <span className="truncate">{nonStriker ? nonStriker.name : 'Select Non-Striker'}</span>
+                   {nonStriker?.isCaptain && <Crown className="w-3.5 h-3.5 text-amber-500 fill-amber-500 shrink-0" />}
                </span>
             </div>
              {nonStriker && (
                 <div className="flex justify-between items-end">
-                    <div className="text-3xl font-black text-gray-800">{getPlayerRuns(nonStriker)} <span className="text-sm font-medium text-gray-500">({getPlayerBalls(nonStriker)})</span></div>
-                    <div className="text-xs font-bold text-gray-400">
-                        4s: <span className="text-gray-700">{getPlayerFours(nonStriker)}</span> • 6s: <span className="text-gray-700">{getPlayerSixes(nonStriker)}</span> • SR: {calculateStrikeRate(getPlayerRuns(nonStriker), getPlayerBalls(nonStriker))}
+                    <div className="text-3xl font-black text-gray-900 dark:text-white">{getPlayerRuns(nonStriker)} <span className="text-sm font-medium text-gray-500 dark:text-gray-400">({getPlayerBalls(nonStriker)})</span></div>
+                    <div className="text-xs font-bold text-gray-500 dark:text-gray-400">
+                        4s: <span className="text-gray-900 dark:text-white font-bold">{getPlayerFours(nonStriker)}</span> • 6s: <span className="text-gray-900 dark:text-white font-bold">{getPlayerSixes(nonStriker)}</span> • SR: {calculateStrikeRate(getPlayerRuns(nonStriker), getPlayerBalls(nonStriker))}
                     </div>
                 </div>
             )}
@@ -596,33 +596,41 @@ export const MatchDashboard: React.FC<DashboardProps> = ({ match, onPlayerUpdate
         {/* Current Bowlers Table */}
         <div className="mb-6">
             <h4 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Bowling Card</h4>
-            <div className="overflow-x-auto bg-gray-50 rounded-lg border border-gray-200">
+            <div className="overflow-x-auto bg-gray-50 dark:bg-slate-900/50 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm">
                 <table className="w-full text-sm">
                     <thead>
-                        <tr className="text-left text-gray-400 border-b border-gray-200">
-                            <th className="p-2 pl-3">Bowler</th>
-                            <th className="p-2 text-right">O</th>
-                            <th className="p-2 text-right">M</th>
-                            <th className="p-2 text-right">R</th>
-                            <th className="p-2 text-right">W</th>
-                            <th className="p-2 text-right pr-3">Eco</th>
+                        <tr className="text-left text-gray-400 border-b border-gray-200 dark:border-slate-700">
+                            <th className="p-2.5 pl-3">Bowler</th>
+                            <th className="p-2.5 text-right">O</th>
+                            <th className="p-2.5 text-right">M</th>
+                            <th className="p-2.5 text-right">R</th>
+                            <th className="p-2.5 text-right">W</th>
+                            <th className="p-2.5 text-right pr-3">Eco</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200">
-                        {activeBowlers.map(b => (
-                            <tr key={b.id} className={`${b.id === match.currentBowlerId ? 'bg-blue-50' : ''}`}>
-                                <td className="p-2 pl-3 font-bold text-gray-800 flex items-center gap-2">
-                                    {b.id === match.currentBowlerId && <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse"></div>}
-                                    <PlayerAvatar player={b} />
-                                    {b.name}
-                                </td>
-                                <td className="p-2 text-right font-mono">{formatOvers(getBowlerOvers(b))}</td>
-                                <td className="p-2 text-right text-gray-600">{getBowlerMaidens(b)}</td>
-                                <td className="p-2 text-right font-mono">{getBowlerRuns(b)}</td>
-                                <td className="p-2 text-right font-mono font-bold text-highlight">{getBowlerWickets(b)}</td>
-                                <td className="p-2 text-right font-mono text-gray-500 pr-3">{calculateEconomy(getBowlerRuns(b), getBowlerOvers(b))}</td>
-                            </tr>
-                        ))}
+                    <tbody className="divide-y divide-gray-200 dark:divide-slate-700/60">
+                        {activeBowlers.map(b => {
+                            const isCurrentBowler = b.id === match.currentBowlerId;
+                            return (
+                                <tr key={b.id} className={`transition-colors ${isCurrentBowler ? 'bg-accent/15 dark:bg-accent/30 font-bold' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}>
+                                    <td className="p-2.5 pl-3 font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                        {isCurrentBowler && <div className="w-2 h-2 rounded-full bg-accent animate-pulse shrink-0"></div>}
+                                        <PlayerAvatar player={b} />
+                                        <span className="truncate">{b.name}</span>
+                                        {isCurrentBowler && (
+                                            <span className="text-[10px] font-black uppercase tracking-wider bg-accent text-white px-2 py-0.5 rounded-full shadow-sm shrink-0">
+                                                BOWLING
+                                            </span>
+                                        )}
+                                    </td>
+                                    <td className="p-2.5 text-right font-mono font-semibold text-gray-900 dark:text-white">{formatOvers(getBowlerOvers(b))}</td>
+                                    <td className="p-2.5 text-right text-gray-700 dark:text-gray-300 font-medium">{getBowlerMaidens(b)}</td>
+                                    <td className="p-2.5 text-right font-mono font-semibold text-gray-900 dark:text-white">{getBowlerRuns(b)}</td>
+                                    <td className="p-2.5 text-right font-mono font-black text-highlight">{getBowlerWickets(b)}</td>
+                                    <td className="p-2.5 text-right font-mono text-gray-600 dark:text-gray-400 pr-3 font-medium">{calculateEconomy(getBowlerRuns(b), getBowlerOvers(b))}</td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>

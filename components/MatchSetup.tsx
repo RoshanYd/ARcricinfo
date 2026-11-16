@@ -332,15 +332,20 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({ onMatchCreate, onSchedul
                     </div>
                     <h3 className="font-bold text-lg md:text-xl text-accent ml-2 truncate">{teamAName}</h3>
                 </div>
-                <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1 md:pr-2 custom-scrollbar">
+                <div className="p-1.5 space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
                   {teamAPlayers.map((player, idx) => (
                     <div key={idx} className="flex items-center gap-2 group">
-                       <button
+                      <button
+                        type="button"
                         onClick={() => setTeamACaptainIndex(idx)}
-                        className={`p-2 rounded-md transition-all flex-shrink-0 ${teamACaptainIndex === idx ? 'text-yellow-500 bg-yellow-100 ring-1 ring-yellow-400' : 'text-gray-300 hover:bg-gray-200'}`}
-                        title="Make Captain"
+                        className={`w-10 h-10 rounded-xl transition-all flex items-center justify-center shrink-0 border ${
+                          teamACaptainIndex === idx
+                            ? 'bg-gradient-to-br from-amber-400 to-yellow-500 border-amber-500 text-slate-900 shadow-md ring-2 ring-amber-300/80 scale-105'
+                            : 'bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 text-slate-400 dark:text-slate-500 hover:text-amber-500 hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/20'
+                        }`}
+                        title={teamACaptainIndex === idx ? "Team Captain" : "Make Captain"}
                       >
-                        <Crown className={`w-5 h-5 md:w-6 md:h-6 ${teamACaptainIndex === idx ? 'fill-current' : ''}`} />
+                        <Crown className={`w-5 h-5 transition-transform ${teamACaptainIndex === idx ? 'fill-amber-950 text-amber-950 stroke-[2.2]' : 'stroke-[1.8]'}`} />
                       </button>
                       <span className="text-xs text-gray-500 font-bold min-w-[1.25rem] text-center">#{idx + 1}</span>
                       <div className="relative flex-1">
@@ -348,26 +353,26 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({ onMatchCreate, onSchedul
                             value={player}
                             onChange={(val) => handlePlayerChange('A', idx, val)}
                             dbPlayers={dbPlayers}
-                            className="w-full py-2.5 px-3 pr-8 md:p-3 md:pr-10 text-sm md:text-base font-medium border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent outline-none text-black bg-white placeholder-gray-400 transition-all shadow-sm"
+                            className="w-full py-2.5 px-3.5 pr-9 md:py-3 md:px-4 md:pr-10 text-sm md:text-base font-medium border-2 border-slate-300 dark:border-slate-700 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:focus:border-blue-400 dark:focus:ring-blue-400/20 outline-none text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-800 placeholder-slate-400 transition-all shadow-sm"
                             placeholder={`Player Name`}
                         />
                         {/* Clear Button */}
                         {player && (
                              <button 
                                 onClick={() => handlePlayerChange('A', idx, '')}
-                                className="absolute right-1 md:right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 p-1.5 rounded-full hover:bg-gray-100 transition-colors"
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
                                 title="Clear Name"
                             >
-                                <X className="w-3 h-3 md:w-4 md:h-4" />
+                                <X className="w-3.5 h-3.5" />
                             </button>
                         )}
                          {userProfile && !player && (
                             <button 
                                 onClick={() => insertProfile('A', idx)}
-                                className="absolute right-1 md:right-2 top-1/2 -translate-y-1/2 text-blue-500 hover:bg-blue-50 p-1.5 rounded-full"
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-blue-500 hover:bg-blue-50 dark:hover:bg-slate-700 p-1.5 rounded-full"
                                 title="Add Me"
                             >
-                                <User className="w-3 h-3 md:w-4 md:h-4" />
+                                <User className="w-3.5 h-3.5" />
                             </button>
                         )}
                       </div>
@@ -384,15 +389,20 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({ onMatchCreate, onSchedul
                     </div>
                     <h3 className="font-bold text-lg md:text-xl text-accent ml-2 truncate">{teamBName}</h3>
                 </div>
-                <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1 md:pr-2 custom-scrollbar">
+                <div className="p-1.5 space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
                   {teamBPlayers.map((player, idx) => (
                     <div key={idx} className="flex items-center gap-2 group">
                       <button
+                        type="button"
                         onClick={() => setTeamBCaptainIndex(idx)}
-                        className={`p-2 rounded-md transition-all flex-shrink-0 ${teamBCaptainIndex === idx ? 'text-yellow-500 bg-yellow-100 ring-1 ring-yellow-400' : 'text-gray-300 hover:bg-gray-200'}`}
-                        title="Make Captain"
+                        className={`w-10 h-10 rounded-xl transition-all flex items-center justify-center shrink-0 border ${
+                          teamBCaptainIndex === idx
+                            ? 'bg-gradient-to-br from-amber-400 to-yellow-500 border-amber-500 text-slate-900 shadow-md ring-2 ring-amber-300/80 scale-105'
+                            : 'bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 text-slate-400 dark:text-slate-500 hover:text-amber-500 hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/20'
+                        }`}
+                        title={teamBCaptainIndex === idx ? "Team Captain" : "Make Captain"}
                       >
-                        <Crown className={`w-5 h-5 md:w-6 md:h-6 ${teamBCaptainIndex === idx ? 'fill-current' : ''}`} />
+                        <Crown className={`w-5 h-5 transition-transform ${teamBCaptainIndex === idx ? 'fill-amber-950 text-amber-950 stroke-[2.2]' : 'stroke-[1.8]'}`} />
                       </button>
                       <span className="text-xs text-gray-500 font-bold min-w-[1.25rem] text-center">#{idx + 1}</span>
                       <div className="relative flex-1">
@@ -400,26 +410,26 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({ onMatchCreate, onSchedul
                             value={player}
                             onChange={(val) => handlePlayerChange('B', idx, val)}
                             dbPlayers={dbPlayers}
-                            className="w-full py-2.5 px-3 pr-8 md:p-3 md:pr-10 text-sm md:text-base font-medium border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent outline-none text-black bg-white placeholder-gray-400 transition-all shadow-sm"
+                            className="w-full py-2.5 px-3.5 pr-9 md:py-3 md:px-4 md:pr-10 text-sm md:text-base font-medium border-2 border-slate-300 dark:border-slate-700 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:focus:border-blue-400 dark:focus:ring-blue-400/20 outline-none text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-800 placeholder-slate-400 transition-all shadow-sm"
                             placeholder={`Player Name`}
                         />
                         {/* Clear Button */}
                          {player && (
                              <button 
                                 onClick={() => handlePlayerChange('B', idx, '')}
-                                className="absolute right-1 md:right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 p-1.5 rounded-full hover:bg-gray-100 transition-colors"
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
                                 title="Clear Name"
                             >
-                                <X className="w-3 h-3 md:w-4 md:h-4" />
+                                <X className="w-3.5 h-3.5" />
                             </button>
                         )}
                         {userProfile && !player && (
                             <button 
                                 onClick={() => insertProfile('B', idx)}
-                                className="absolute right-1 md:right-2 top-1/2 -translate-y-1/2 text-blue-500 hover:bg-blue-50 p-1.5 rounded-full"
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-blue-500 hover:bg-blue-50 dark:hover:bg-slate-700 p-1.5 rounded-full"
                                 title="Add Me"
                             >
-                                <User className="w-3 h-3 md:w-4 md:h-4" />
+                                <User className="w-3.5 h-3.5" />
                             </button>
                         )}
                       </div>

@@ -45,9 +45,9 @@
     </script>
     <style>
       body {
-        background-color: #F6F3ED;
-        color: #313851;
-        transition: background-color 0.3s, color 0.3s;
+        background-color: #F8FAFC;
+        color: #0F172A;
+        transition: background-color 0.25s ease, color 0.25s ease;
       }
       /* Hide scrollbar for clean UI */
       ::-webkit-scrollbar {
@@ -55,51 +55,402 @@
         height: 6px;
       }
       ::-webkit-scrollbar-track {
-        background: #F6F3ED;
+        background: #F8FAFC;
       }
       ::-webkit-scrollbar-thumb {
-        background: #C2CBD3;
+        background: #CBD5E1;
         border-radius: 3px;
       }
 
-      /* Dark Mode Global Variables and Overrides */
-      html.dark body {
-        background-color: #0f172a; /* slate-900 */
-        color: #f8fafc; /* slate-50 */
+      /* ══════════════════════════════════════════════════════════════════
+         ARCRICINFO 5-THEME SUITE
+         1. Light (Default)
+         2. Red Theme (Passion Crimson)
+         3. Green Theme (Pitch Turf)
+         4. Black Theme (Midnight Dark OLED)
+         5. Creamy Theme (Vintage Test Ivory)
+         ══════════════════════════════════════════════════════════════════ */
+
+      /* ── 1. LIGHT THEME (Default) ─────────────────────────────────── */
+      html.theme-light body, html:not([data-theme]) body {
+        background-color: #F8FAFC;
+        color: #0F172A;
       }
-      html.dark .bg-white {
-        background-color: #1e293b !important; /* slate-800 */
-        border-color: #334155 !important;
+      html.theme-light nav.bg-accent, html:not([data-theme]) nav.bg-accent {
+        background-color: #1E293B !important;
       }
-      html.dark .bg-gray-50, html.dark .bg-slate-50 {
-        background-color: #0f172a !important; /* slate-900 */
-        border-color: #1e293b !important;
+      html.theme-light .bg-white, html:not([data-theme]) .bg-white {
+        background-color: #FFFFFF !important;
+        border-color: #E2E8F0 !important;
       }
-      html.dark .text-gray-900, html.dark .text-gray-800, html.dark .text-slate-900 {
-        color: #f1f5f9 !important; /* slate-100 */
+      html.theme-light .bg-gray-50, html.theme-light .bg-slate-50,
+      html:not([data-theme]) .bg-gray-50, html:not([data-theme]) .bg-slate-50 {
+        background-color: #F8FAFC !important;
+        border-color: #E2E8F0 !important;
       }
-      html.dark .text-gray-600, html.dark .text-gray-500 {
-        color: #94a3b8 !important; /* slate-400 */
+      html.theme-light .bg-gray-100, html.theme-light .bg-slate-100,
+      html:not([data-theme]) .bg-gray-100, html:not([data-theme]) .bg-slate-100 {
+        background-color: #F1F5F9 !important;
+        border-color: #E2E8F0 !important;
       }
-      html.dark .border-gray-100, html.dark .border-gray-200, html.dark .border-gray-300 {
-        border-color: #334155 !important; /* slate-700 */
+      html.theme-light .text-gray-900, html.theme-light .text-gray-800, html.theme-light .text-slate-900,
+      html:not([data-theme]) .text-gray-900, html:not([data-theme]) .text-gray-800, html:not([data-theme]) .text-slate-900 {
+        color: #0F172A !important;
       }
-      html.dark .bg-primary {
-          background-color: #0f172a !important;
+      html.theme-light .text-gray-700, html.theme-light .text-gray-600, html.theme-light .text-gray-500,
+      html:not([data-theme]) .text-gray-700, html:not([data-theme]) .text-gray-600, html:not([data-theme]) .text-gray-500 {
+        color: #475569 !important;
       }
-      html.dark input, html.dark select, html.dark textarea {
-        background-color: #0f172a !important;
-        color: #f1f5f9 !important;
-        border-color: #334155 !important;
+      html.theme-light input, html.theme-light select, html.theme-light textarea,
+      html:not([data-theme]) input, html:not([data-theme]) select, html:not([data-theme]) textarea {
+        background-color: #FFFFFF !important;
+        color: #0F172A !important;
+        border-color: #CBD5E1 !important;
       }
-      html.dark ::-webkit-calendar-picker-indicator {
+      html.theme-light input:focus, html.theme-light select:focus, html.theme-light textarea:focus,
+      html:not([data-theme]) input:focus, html:not([data-theme]) select:focus, html:not([data-theme]) textarea:focus {
+        border-color: #3B82F6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+      }
+
+      /* ── 2. RED THEME (Passion Crimson) ───────────────────────────── */
+      html.theme-red body, html[data-theme="red"] body {
+        background-color: #160408 !important;
+        color: #FFF1F2 !important;
+      }
+      html.theme-red nav.bg-accent, html[data-theme="red"] nav.bg-accent,
+      html.theme-red .bg-accent, html[data-theme="red"] .bg-accent {
+        background-color: #881337 !important;
+        border-color: #BE123C !important;
+      }
+      html.theme-red .border-accent, html[data-theme="red"] .border-accent {
+        border-color: #E11D48 !important;
+      }
+      html.theme-red .text-accent, html[data-theme="red"] .text-accent {
+        color: #FDA4AF !important;
+      }
+      html.theme-red .bg-white, html[data-theme="red"] .bg-white {
+        background-color: #240A11 !important;
+        border-color: #571424 !important;
+      }
+      html.theme-red .bg-gray-50, html.theme-red .bg-slate-50, html.theme-red .bg-slate-800,
+      html[data-theme="red"] .bg-gray-50, html[data-theme="red"] .bg-slate-50, html[data-theme="red"] .bg-slate-800 {
+        background-color: #1A060C !important;
+        border-color: #450E1B !important;
+      }
+      html.theme-red .bg-gray-100, html.theme-red .bg-slate-100, html.theme-red .bg-slate-700,
+      html[data-theme="red"] .bg-gray-100, html[data-theme="red"] .bg-slate-100, html[data-theme="red"] .bg-slate-700 {
+        background-color: #310D18 !important;
+        border-color: #571424 !important;
+      }
+      html.theme-red .bg-blue-50, html[data-theme="red"] .bg-blue-50,
+      html.theme-red .bg-blue-50\/50, html[data-theme="red"] .bg-blue-50\/50,
+      html.theme-red .bg-blue-100, html[data-theme="red"] .bg-blue-100 {
+        background-color: rgba(225, 29, 72, 0.18) !important;
+        color: #FFF1F2 !important;
+      }
+      html.theme-red thead, html[data-theme="red"] thead {
+        background-color: #1A060C !important;
+        color: #FDA4AF !important;
+      }
+      html.theme-red table tr, html[data-theme="red"] table tr {
+        border-color: #4C1220 !important;
+      }
+      html.theme-red .text-gray-900, html.theme-red .text-gray-800, html.theme-red .text-slate-900, html.theme-red .text-black,
+      html[data-theme="red"] .text-gray-900, html[data-theme="red"] .text-gray-800, html[data-theme="red"] .text-slate-900, html[data-theme="red"] .text-black {
+        color: #FFF1F2 !important;
+      }
+      html.theme-red .text-gray-700, html.theme-red .text-gray-600, html.theme-red .text-gray-500,
+      html[data-theme="red"] .text-gray-700, html[data-theme="red"] .text-gray-600, html[data-theme="red"] .text-gray-500 {
+        color: #FECDD3 !important;
+      }
+      html.theme-red .text-gray-400, html.theme-red .text-slate-400,
+      html[data-theme="red"] .text-gray-400, html[data-theme="red"] .text-slate-400 {
+        color: #FDA4AF !important;
+      }
+      html.theme-red .border-gray-100, html.theme-red .border-gray-200, html.theme-red .border-gray-300,
+      html.theme-red .border-slate-700, html.theme-red .border-slate-600, html.theme-red .border-secondary\/30,
+      html[data-theme="red"] .border-gray-100, html[data-theme="red"] .border-gray-200, html[data-theme="red"] .border-gray-300,
+      html[data-theme="red"] .border-slate-700, html[data-theme="red"] .border-slate-600, html[data-theme="red"] .border-secondary\/30 {
+        border-color: #571424 !important;
+      }
+      html.theme-red .bg-primary, html[data-theme="red"] .bg-primary {
+        background-color: #160408 !important;
+      }
+      html.theme-red input, html.theme-red select, html.theme-red textarea,
+      html[data-theme="red"] input, html[data-theme="red"] select, html[data-theme="red"] textarea {
+        background-color: #1A060C !important;
+        color: #FFF1F2 !important;
+        border-color: #571424 !important;
+      }
+      html.theme-red input:focus, html.theme-red select:focus, html.theme-red textarea:focus,
+      html[data-theme="red"] input:focus, html[data-theme="red"] select:focus, html[data-theme="red"] textarea:focus {
+        border-color: #E11D48 !important;
+        box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.2) !important;
+      }
+      html.theme-red ::-webkit-calendar-picker-indicator, html[data-theme="red"] ::-webkit-calendar-picker-indicator {
         filter: invert(1);
       }
-      html.dark ::-webkit-scrollbar-track {
-        background: #0f172a;
+      html.theme-red ::-webkit-scrollbar-track, html[data-theme="red"] ::-webkit-scrollbar-track {
+        background: #160408;
       }
-      html.dark ::-webkit-scrollbar-thumb {
-        background: #334155;
+      html.theme-red ::-webkit-scrollbar-thumb, html[data-theme="red"] ::-webkit-scrollbar-thumb {
+        background: #571424;
+      }
+
+      /* ── 3. GREEN THEME (Pitch Turf) ──────────────────────────────── */
+      html.theme-green body, html[data-theme="green"] body {
+        background-color: #03170E !important;
+        color: #ECFDF5 !important;
+      }
+      html.theme-green nav.bg-accent, html[data-theme="green"] nav.bg-accent,
+      html.theme-green .bg-accent, html[data-theme="green"] .bg-accent {
+        background-color: #064E3B !important;
+        border-color: #059669 !important;
+      }
+      html.theme-green .border-accent, html[data-theme="green"] .border-accent {
+        border-color: #10B981 !important;
+      }
+      html.theme-green .text-accent, html[data-theme="green"] .text-accent {
+        color: #6EE7B7 !important;
+      }
+      html.theme-green .bg-white, html[data-theme="green"] .bg-white {
+        background-color: #0B281B !important;
+        border-color: #175338 !important;
+      }
+      html.theme-green .bg-gray-50, html.theme-green .bg-slate-50, html.theme-green .bg-slate-800,
+      html[data-theme="green"] .bg-gray-50, html[data-theme="green"] .bg-slate-50, html[data-theme="green"] .bg-slate-800 {
+        background-color: #051E13 !important;
+        border-color: #103B28 !important;
+      }
+      html.theme-green .bg-gray-100, html.theme-green .bg-slate-100, html.theme-green .bg-slate-700,
+      html[data-theme="green"] .bg-gray-100, html[data-theme="green"] .bg-slate-100, html[data-theme="green"] .bg-slate-700 {
+        background-color: #103B28 !important;
+        border-color: #175338 !important;
+      }
+      html.theme-green .bg-blue-50, html[data-theme="green"] .bg-blue-50,
+      html.theme-green .bg-blue-50\/50, html[data-theme="green"] .bg-blue-50\/50,
+      html.theme-green .bg-blue-100, html[data-theme="green"] .bg-blue-100 {
+        background-color: rgba(16, 185, 129, 0.18) !important;
+        color: #ECFDF5 !important;
+      }
+      html.theme-green thead, html[data-theme="green"] thead {
+        background-color: #051E13 !important;
+        color: #A7F3D0 !important;
+      }
+      html.theme-green table tr, html[data-theme="green"] table tr {
+        border-color: #144D34 !important;
+      }
+      html.theme-green .text-gray-900, html.theme-green .text-gray-800, html.theme-green .text-slate-900, html.theme-green .text-black,
+      html[data-theme="green"] .text-gray-900, html[data-theme="green"] .text-gray-800, html[data-theme="green"] .text-slate-900, html[data-theme="green"] .text-black {
+        color: #ECFDF5 !important;
+      }
+      html.theme-green .text-gray-700, html.theme-green .text-gray-600, html.theme-green .text-gray-500,
+      html[data-theme="green"] .text-gray-700, html[data-theme="green"] .text-gray-600, html[data-theme="green"] .text-gray-500 {
+        color: #A7F3D0 !important;
+      }
+      html.theme-green .text-gray-400, html.theme-green .text-slate-400,
+      html[data-theme="green"] .text-gray-400, html[data-theme="green"] .text-slate-400 {
+        color: #6EE7B7 !important;
+      }
+      html.theme-green .border-gray-100, html.theme-green .border-gray-200, html.theme-green .border-gray-300,
+      html.theme-green .border-slate-700, html.theme-green .border-slate-600, html.theme-green .border-secondary\/30,
+      html[data-theme="green"] .border-gray-100, html[data-theme="green"] .border-gray-200, html[data-theme="green"] .border-gray-300,
+      html[data-theme="green"] .border-slate-700, html[data-theme="green"] .border-slate-600, html[data-theme="green"] .border-secondary\/30 {
+        border-color: #175338 !important;
+      }
+      html.theme-green .bg-primary, html[data-theme="green"] .bg-primary {
+        background-color: #03170E !important;
+      }
+      html.theme-green input, html.theme-green select, html.theme-green textarea,
+      html[data-theme="green"] input, html[data-theme="green"] select, html[data-theme="green"] textarea {
+        background-color: #051E13 !important;
+        color: #ECFDF5 !important;
+        border-color: #175338 !important;
+      }
+      html.theme-green input:focus, html.theme-green select:focus, html.theme-green textarea:focus,
+      html[data-theme="green"] input:focus, html[data-theme="green"] select:focus, html[data-theme="green"] textarea:focus {
+        border-color: #10B981 !important;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2) !important;
+      }
+      html.theme-green ::-webkit-calendar-picker-indicator, html[data-theme="green"] ::-webkit-calendar-picker-indicator {
+        filter: invert(1);
+      }
+      html.theme-green ::-webkit-scrollbar-track, html[data-theme="green"] ::-webkit-scrollbar-track {
+        background: #03170E;
+      }
+      html.theme-green ::-webkit-scrollbar-thumb, html[data-theme="green"] ::-webkit-scrollbar-thumb {
+        background: #175338;
+      }
+
+      /* ── 4. BLACK THEME (Midnight Dark OLED) ──────────────────────── */
+      html.theme-black body, html[data-theme="black"] body {
+        background-color: #09090B !important;
+        color: #FAFAFA !important;
+      }
+      html.theme-black nav.bg-accent, html[data-theme="black"] nav.bg-accent,
+      html.theme-black .bg-accent, html[data-theme="black"] .bg-accent {
+        background-color: #18181B !important;
+        border-color: #27272A !important;
+      }
+      html.theme-black .border-accent, html[data-theme="black"] .border-accent {
+        border-color: #3F3F46 !important;
+      }
+      html.theme-black .text-accent, html[data-theme="black"] .text-accent {
+        color: #FACC15 !important;
+      }
+      html.theme-black .bg-white, html[data-theme="black"] .bg-white {
+        background-color: #141417 !important;
+        border-color: #27272A !important;
+      }
+      html.theme-black .bg-gray-50, html.theme-black .bg-slate-50, html.theme-black .bg-slate-800,
+      html[data-theme="black"] .bg-gray-50, html[data-theme="black"] .bg-slate-50, html[data-theme="black"] .bg-slate-800 {
+        background-color: #0D0D10 !important;
+        border-color: #1E1E24 !important;
+      }
+      html.theme-black .bg-gray-100, html.theme-black .bg-slate-100, html.theme-black .bg-slate-700,
+      html[data-theme="black"] .bg-gray-100, html[data-theme="black"] .bg-slate-100, html[data-theme="black"] .bg-slate-700 {
+        background-color: #1E1E24 !important;
+        border-color: #27272A !important;
+      }
+      html.theme-black .bg-blue-50, html[data-theme="black"] .bg-blue-50,
+      html.theme-black .bg-blue-50\/50, html[data-theme="black"] .bg-blue-50\/50,
+      html.theme-black .bg-blue-100, html[data-theme="black"] .bg-blue-100 {
+        background-color: rgba(250, 204, 21, 0.15) !important;
+        color: #FAFAFA !important;
+      }
+      html.theme-black thead, html[data-theme="black"] thead {
+        background-color: #0D0D10 !important;
+        color: #A1A1AA !important;
+      }
+      html.theme-black table tr, html[data-theme="black"] table tr {
+        border-color: #27272A !important;
+      }
+      html.theme-black .text-gray-900, html.theme-black .text-gray-800, html.theme-black .text-slate-900, html.theme-black .text-black,
+      html[data-theme="black"] .text-gray-900, html[data-theme="black"] .text-gray-800, html[data-theme="black"] .text-slate-900, html[data-theme="black"] .text-black {
+        color: #FAFAFA !important;
+      }
+      html.theme-black .text-gray-700, html.theme-black .text-gray-600, html.theme-black .text-gray-500,
+      html[data-theme="black"] .text-gray-700, html[data-theme="black"] .text-gray-600, html[data-theme="black"] .text-gray-500 {
+        color: #A1A1AA !important;
+      }
+      html.theme-black .text-gray-400, html.theme-black .text-slate-400,
+      html[data-theme="black"] .text-gray-400, html[data-theme="black"] .text-slate-400 {
+        color: #71717A !important;
+      }
+      html.theme-black .border-gray-100, html.theme-black .border-gray-200, html.theme-black .border-gray-300,
+      html.theme-black .border-slate-700, html.theme-black .border-slate-600, html.theme-black .border-secondary\/30,
+      html[data-theme="black"] .border-gray-100, html[data-theme="black"] .border-gray-200, html[data-theme="black"] .border-gray-300,
+      html[data-theme="black"] .border-slate-700, html[data-theme="black"] .border-slate-600, html[data-theme="black"] .border-secondary\/30 {
+        border-color: #27272A !important;
+      }
+      html.theme-black .bg-primary, html[data-theme="black"] .bg-primary {
+        background-color: #09090B !important;
+      }
+      html.theme-black input, html.theme-black select, html.theme-black textarea,
+      html[data-theme="black"] input, html[data-theme="black"] select, html[data-theme="black"] textarea {
+        background-color: #0D0D10 !important;
+        color: #FAFAFA !important;
+        border-color: #27272A !important;
+      }
+      html.theme-black input:focus, html.theme-black select:focus, html.theme-black textarea:focus,
+      html[data-theme="black"] input:focus, html[data-theme="black"] select:focus, html[data-theme="black"] textarea:focus {
+        border-color: #EAB308 !important;
+        box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.2) !important;
+      }
+      html.theme-black ::-webkit-calendar-picker-indicator, html[data-theme="black"] ::-webkit-calendar-picker-indicator {
+        filter: invert(1);
+      }
+      html.theme-black ::-webkit-scrollbar-track, html[data-theme="black"] ::-webkit-scrollbar-track {
+        background: #09090B;
+      }
+      html.theme-black ::-webkit-scrollbar-thumb, html[data-theme="black"] ::-webkit-scrollbar-thumb {
+        background: #27272A;
+      }
+
+      /* ── 5. CREAMY THEME (Vintage Test Ivory) ─────────────────────── */
+      html.theme-creamy body, html[data-theme="creamy"] body {
+        background-color: #FAF6EE !important;
+        color: #2C1E14 !important;
+      }
+      html.theme-creamy nav.bg-accent, html[data-theme="creamy"] nav.bg-accent,
+      html.theme-creamy .bg-accent, html[data-theme="creamy"] .bg-accent {
+        background-color: #5C2C16 !important;
+        border-color: #78350F !important;
+      }
+      html.theme-creamy .border-accent, html[data-theme="creamy"] .border-accent {
+        border-color: #8B4513 !important;
+      }
+      html.theme-creamy .text-accent, html[data-theme="creamy"] .text-accent {
+        color: #78350F !important;
+      }
+      html.theme-creamy .bg-white, html[data-theme="creamy"] .bg-white {
+        background-color: #FFFDF9 !important;
+        border-color: #DFD0BC !important;
+      }
+      html.theme-creamy .bg-gray-50, html.theme-creamy .bg-slate-50,
+      html[data-theme="creamy"] .bg-gray-50, html[data-theme="creamy"] .bg-slate-50 {
+        background-color: #F3EBDD !important;
+        border-color: #D6C4AD !important;
+      }
+      html.theme-creamy .bg-gray-100, html.theme-creamy .bg-slate-100,
+      html[data-theme="creamy"] .bg-gray-100, html[data-theme="creamy"] .bg-slate-100 {
+        background-color: #ECE2D0 !important;
+        border-color: #DFD0BC !important;
+      }
+      html.theme-creamy .bg-blue-50, html[data-theme="creamy"] .bg-blue-50,
+      html.theme-creamy .bg-blue-50\/50, html[data-theme="creamy"] .bg-blue-50\/50,
+      html.theme-creamy .bg-blue-100, html[data-theme="creamy"] .bg-blue-100 {
+        background-color: rgba(120, 53, 15, 0.12) !important;
+        color: #2C1E14 !important;
+      }
+      html.theme-creamy thead, html[data-theme="creamy"] thead {
+        background-color: #F3EBDD !important;
+        color: #6E5544 !important;
+      }
+      html.theme-creamy table tr, html[data-theme="creamy"] table tr {
+        border-color: #DFD0BC !important;
+      }
+      html.theme-creamy .text-gray-900, html.theme-creamy .text-gray-800, html.theme-creamy .text-slate-900, html.theme-creamy .text-black,
+      html[data-theme="creamy"] .text-gray-900, html[data-theme="creamy"] .text-gray-800, html[data-theme="creamy"] .text-slate-900, html[data-theme="creamy"] .text-black {
+        color: #2C1E14 !important;
+      }
+      html.theme-creamy .text-gray-700, html.theme-creamy .text-gray-600, html.theme-creamy .text-gray-500,
+      html[data-theme="creamy"] .text-gray-700, html[data-theme="creamy"] .text-gray-600, html[data-theme="creamy"] .text-gray-500 {
+        color: #6E5544 !important;
+      }
+      html.theme-creamy .text-gray-400, html.theme-creamy .text-slate-400,
+      html[data-theme="creamy"] .text-gray-400, html[data-theme="creamy"] .text-slate-400 {
+        color: #8C7260 !important;
+      }
+      html.theme-creamy .border-gray-100, html.theme-creamy .border-gray-200, html.theme-creamy .border-gray-300,
+      html.theme-creamy .border-secondary\/30,
+      html[data-theme="creamy"] .border-gray-100, html[data-theme="creamy"] .border-gray-200, html[data-theme="creamy"] .border-gray-300,
+      html[data-theme="creamy"] .border-secondary\/30 {
+        border-color: #DFD0BC !important;
+      }
+      html.theme-creamy .bg-primary, html[data-theme="creamy"] .bg-primary {
+        background-color: #FAF6EE !important;
+      }
+      html.theme-creamy input, html.theme-creamy select, html.theme-creamy textarea,
+      html[data-theme="creamy"] input, html[data-theme="creamy"] select, html[data-theme="creamy"] textarea {
+        background-color: #FFFDF9 !important;
+        color: #2C1E14 !important;
+        border-color: #D6C4AD !important;
+      }
+      html.theme-creamy input:focus, html.theme-creamy select:focus, html.theme-creamy textarea:focus,
+      html[data-theme="creamy"] input:focus, html[data-theme="creamy"] select:focus, html[data-theme="creamy"] textarea:focus {
+        border-color: #8B4513 !important;
+        box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.15) !important;
+      }
+      html.theme-creamy ::-webkit-calendar-picker-indicator, html[data-theme="creamy"] ::-webkit-calendar-picker-indicator {
+        filter: none;
+      }
+      html.theme-creamy ::-webkit-scrollbar-track, html[data-theme="creamy"] ::-webkit-scrollbar-track {
+        background: #FAF6EE;
+      }
+      html.theme-creamy ::-webkit-scrollbar-thumb, html[data-theme="creamy"] ::-webkit-scrollbar-thumb {
+        background: #D6C4AD;
       }
     </style>
   <script type="importmap">

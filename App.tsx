@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Match, MatchStatus, Team, DismissalType, ExtraType, Ball, Player, AnimationEvent, UserProfile, Series, SuperOverPlayerStats, Tournament, TournamentFixture, PersistentTeam } from './types';
+import { Match, MatchStatus, Team, DismissalType, ExtraType, Ball, Player, AnimationEvent, UserProfile, Series, SuperOverPlayerStats, Tournament, TournamentFixture, PersistentTeam, AppTheme } from './types';
 import { MatchSetup } from './components/MatchSetup';
 import { MatchDashboard } from './components/MatchDashboard';
 import { LiveScorer } from './components/LiveScorer';
@@ -26,7 +26,7 @@ import { loadProfile, saveProfile, loadMatches, saveMatch, deleteMatch, loadActi
 import { processMatchResult } from './utils/tournamentLogic';
 import { socket } from './utils/socket';
 import { NotificationsView } from './components/NotificationsView';
-import { History, Trophy, ChevronLeft, ChevronRight, Search, Menu, X, Users, Activity, User, LogIn, LogOut, Camera, Upload, Info, Mail, Layers, Star, PlayCircle, Flag, Filter, Calendar, Zap, Loader2, Trash2, Edit3, Target, Moon, Sun, Bell } from 'lucide-react';
+import { History, Trophy, ChevronLeft, ChevronRight, Search, Menu, X, Users, Activity, User, LogIn, LogOut, Camera, Upload, Info, Mail, Layers, Star, PlayCircle, Flag, Filter, Calendar, Zap, Loader2, Trash2, Edit3, Target, Bell, Palette, Check } from 'lucide-react';
 
 // --- CONFIGURATION ---
 const LOGO_URL = "https://i.postimg.cc/fRdWdn9t/20251127-224320.png";
@@ -453,8 +453,73 @@ const ProfileView = ({ userProfile, dbPlayers, onViewStats, onSave, onLogout }: 
     );
 };
 
-const Navbar = ({ activeView, onViewChange, isMatchActive, userProfile, isDarkMode, toggleDarkMode }: { activeView: string, onViewChange: (v: string) => void, isMatchActive: boolean, userProfile: UserProfile | null, isDarkMode: boolean, toggleDarkMode: () => void }) => {
+const THEME_OPTIONS: {
+    id: AppTheme;
+    name: string;
+    description: string;
+    colorPreview: string;
+    borderPreview: string;
+    badgeText?: string;
+}[] = [
+    {
+        id: 'light',
+        name: 'Light',
+        description: 'Crisp classic default',
+        colorPreview: 'bg-white',
+        borderPreview: 'border-slate-300',
+        badgeText: 'Default'
+    },
+    {
+        id: 'red',
+        name: 'Red',
+        description: 'Passion cricket crimson',
+        colorPreview: 'bg-rose-700',
+        borderPreview: 'border-rose-500',
+        badgeText: 'Crimson'
+    },
+    {
+        id: 'green',
+        name: 'Green',
+        description: 'Pitch turf stadium',
+        colorPreview: 'bg-emerald-600',
+        borderPreview: 'border-emerald-400',
+        badgeText: 'Pitch'
+    },
+    {
+        id: 'black',
+        name: 'Black',
+        description: 'Midnight dark OLED',
+        colorPreview: 'bg-zinc-950',
+        borderPreview: 'border-zinc-700',
+        badgeText: 'Dark'
+    },
+    {
+        id: 'creamy',
+        name: 'Creamy',
+        description: 'Vintage test match ivory',
+        colorPreview: 'bg-[#FAF6EE]',
+        borderPreview: 'border-[#DFD0BC]',
+        badgeText: 'Vintage'
+    },
+];
+
+const Navbar = ({
+    activeView,
+    onViewChange,
+    isMatchActive,
+    userProfile,
+    currentTheme,
+    onThemeChange
+}: {
+    activeView: string;
+    onViewChange: (v: string) => void;
+    isMatchActive: boolean;
+    userProfile: UserProfile | null;
+    currentTheme: AppTheme;
+    onThemeChange: (t: AppTheme) => void;
+}) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
 
     const navItems = [
         { id: 'HOME', label: 'Home', icon: Trophy },
@@ -469,7 +534,9 @@ const Navbar = ({ activeView, onViewChange, isMatchActive, userProfile, isDarkMo
     const handleNav = (view: string) => {
         onViewChange(view);
         setIsMenuOpen(false);
-    }
+    };
+
+    const activeThemeObj = THEME_OPTIONS.find(t => t.id === currentTheme) || THEME_OPTIONS[0];
 
     return (
         <nav className="bg-accent text-white sticky top-0 z-50 shadow-md">
@@ -499,7 +566,7 @@ const Navbar = ({ activeView, onViewChange, isMatchActive, userProfile, isDarkMo
                             <button
                                 key={item.id}
                                 onClick={() => handleNav(item.id)}
-                                className={`flex items-center gap-2 text-sm font-medium transition-colors ${activeView === item.id ? 'text-yellow-400' : 'text-gray-300 hover:text-white'}`}
+                                className={`flex items-center gap-2 text-sm font-medium transition-colors ${activeView === item.id ? 'text-yellow-400 font-bold' : 'text-gray-300 hover:text-white'}`}
                             >
                                 <item.icon className="w-4 h-4" />
                                 {item.label}
@@ -507,28 +574,90 @@ const Navbar = ({ activeView, onViewChange, isMatchActive, userProfile, isDarkMo
                         ))}
                     </div>
 
-                    <div className="flex shrink-0 items-center gap-2 md:gap-4">
+                    <div className="flex shrink-0 items-center gap-2 md:gap-3">
                         {isMatchActive && activeView !== 'LIVE' && activeView !== 'TOSS' && activeView !== 'SETUP' && (
                             <button
                                 onClick={() => handleNav('LIVE')}
-                                className="flex items-center gap-2 px-3 py-1.5 bg-red-600 rounded-full animate-pulse text-xs font-bold"
+                                className="flex items-center gap-2 px-3 py-1.5 bg-red-600 rounded-full animate-pulse text-xs font-bold shadow-md"
                             >
                                 <Activity className="w-3 h-3" /> <span className="hidden md:inline">LIVE</span>
                             </button>
                         )}
 
-                        <button 
-                            onClick={toggleDarkMode} 
-                            className="p-1.5 hover:bg-white/10 rounded-full transition-colors flex items-center justify-center border border-transparent hover:border-white/20"
-                            title="Toggle Dark Mode"
-                        >
-                            {isDarkMode ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-indigo-300" />}
-                        </button>
+                        {/* ─── 5-Theme Selector Dropdown ───────────────────────── */}
+                        <div className="relative">
+                            <button 
+                                onClick={() => setIsThemeMenuOpen(!isThemeMenuOpen)} 
+                                className="px-2.5 py-1.5 hover:bg-white/10 rounded-xl transition-all flex items-center gap-2 border border-white/20 text-white text-xs font-semibold shadow-sm active:scale-95"
+                                title="Theme Selector (5 themes)"
+                            >
+                                <Palette className="w-4 h-4 text-yellow-400 shrink-0" />
+                                <span className="hidden sm:inline capitalize font-bold">{activeThemeObj.name}</span>
+                                <span className={`w-3 h-3 rounded-full ${activeThemeObj.colorPreview} ${activeThemeObj.borderPreview} border shadow-sm shrink-0`} />
+                            </button>
+
+                            {isThemeMenuOpen && (
+                                <>
+                                    <div className="fixed inset-0 z-40" onClick={() => setIsThemeMenuOpen(false)} />
+                                    <div className="absolute right-0 mt-2 w-64 bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/15 p-2 z-50 animate-scale-up text-white">
+                                        <div className="px-3 py-2 border-b border-white/10 mb-1 flex items-center justify-between">
+                                            <span className="text-xs font-extrabold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                                                <Palette className="w-3.5 h-3.5 text-yellow-400" /> Choose Theme
+                                            </span>
+                                            <span className="text-[10px] text-yellow-400 font-bold bg-yellow-400/15 border border-yellow-400/30 px-1.5 py-0.5 rounded-full">5 Themes</span>
+                                        </div>
+                                        <div className="space-y-1">
+                                            {THEME_OPTIONS.map(opt => {
+                                                const isSelected = currentTheme === opt.id;
+                                                return (
+                                                    <button
+                                                        key={opt.id}
+                                                        onClick={() => {
+                                                            onThemeChange(opt.id);
+                                                            setIsThemeMenuOpen(false);
+                                                        }}
+                                                        className={`w-full flex items-center justify-between p-2.5 rounded-xl transition-all ${
+                                                            isSelected
+                                                                ? 'bg-white/15 border border-yellow-400/40 text-white shadow-md'
+                                                                : 'hover:bg-white/8 text-slate-300 hover:text-white border border-transparent'
+                                                        }`}
+                                                    >
+                                                        <div className="flex items-center gap-3">
+                                                            <div className={`w-5 h-5 rounded-full border shadow-sm flex items-center justify-center shrink-0 ${opt.colorPreview} ${opt.borderPreview}`}>
+                                                                {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-yellow-400" />}
+                                                            </div>
+                                                            <div className="text-left">
+                                                                <div className="text-sm font-bold flex items-center gap-2">
+                                                                    {opt.name}
+                                                                    {opt.badgeText && (
+                                                                        <span className={`text-[9px] px-1.5 py-0.2 rounded font-semibold uppercase ${
+                                                                            opt.id === 'light' ? 'bg-blue-500/20 text-blue-300' :
+                                                                            opt.id === 'red' ? 'bg-rose-500/20 text-rose-300' :
+                                                                            opt.id === 'green' ? 'bg-emerald-500/20 text-emerald-300' :
+                                                                            opt.id === 'black' ? 'bg-zinc-700/50 text-zinc-300' :
+                                                                            'bg-amber-500/20 text-amber-300'
+                                                                        }`}>
+                                                                            {opt.badgeText}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <div className="text-[11px] text-slate-400">{opt.description}</div>
+                                                            </div>
+                                                        </div>
+                                                        {isSelected && <Check className="w-4 h-4 text-yellow-400 shrink-0 ml-2" />}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
 
                         {userProfile && (
                             <button
                                 onClick={() => handleNav('NOTIFICATIONS')}
-                                className="p-1.5 hover:bg-white/10 rounded-full transition-colors relative mr-2"
+                                className="p-1.5 hover:bg-white/10 rounded-full transition-colors relative"
                                 title="Inbox Updates"
                             >
                                 <Bell className={`w-5 h-5 ${activeView === 'NOTIFICATIONS' ? 'text-yellow-400' : 'text-white'}`} />
@@ -536,6 +665,7 @@ const Navbar = ({ activeView, onViewChange, isMatchActive, userProfile, isDarkMo
                                 <span className="absolute top-1 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
                             </button>
                         )}
+
                         <button
                             onClick={() => handleNav('PROFILE')}
                             className="flex items-center gap-2 hover:bg-white/10 p-1.5 rounded-lg transition-colors"
@@ -560,52 +690,84 @@ const Navbar = ({ activeView, onViewChange, isMatchActive, userProfile, isDarkMo
             </div>
 
             {isMenuOpen && (
-                <div className="md:hidden bg-gray-900 border-t border-gray-800 animate-fade-in">
-                    <div className="p-4 space-y-2">
-                        {isMatchActive && activeView !== 'LIVE' && (
-                            <button
-                                onClick={() => handleNav('LIVE')}
-                                className="w-full flex items-center gap-3 px-4 py-3 bg-red-900/30 text-red-400 rounded-lg font-bold"
-                            >
-                                <Activity className="w-5 h-5" /> Back to Live Match
-                            </button>
-                        )}
-                        {navItems.map(item => (
-                            <button
-                                key={item.id}
-                                onClick={() => handleNav(item.id)}
-                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium ${activeView === item.id ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'}`}
-                            >
-                                <item.icon className="w-5 h-5" />
-                                {item.label}
-                            </button>
-                        ))}
+                <div className="md:hidden bg-slate-900 border-t border-slate-800 animate-fade-in p-4 space-y-3">
+                    {/* Theme selection strip in mobile menu */}
+                    <div className="pb-3 border-b border-white/10">
+                        <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
+                            <Palette className="w-3.5 h-3.5 text-yellow-400" /> Choose Theme
+                        </div>
+                        <div className="grid grid-cols-5 gap-1.5">
+                            {THEME_OPTIONS.map(opt => (
+                                <button
+                                    key={opt.id}
+                                    onClick={() => onThemeChange(opt.id)}
+                                    className={`flex flex-col items-center gap-1 p-2 rounded-xl text-center transition-all ${
+                                        currentTheme === opt.id
+                                            ? 'bg-white/20 border border-yellow-400 text-white font-bold'
+                                            : 'bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10'
+                                    }`}
+                                >
+                                    <span className={`w-4 h-4 rounded-full border shadow-sm ${opt.colorPreview} ${opt.borderPreview}`} />
+                                    <span className="text-[10px] capitalize leading-none">{opt.name}</span>
+                                </button>
+                            ))}
+                        </div>
                     </div>
+
+                    {isMatchActive && activeView !== 'LIVE' && (
+                        <button
+                            onClick={() => handleNav('LIVE')}
+                            className="w-full flex items-center gap-3 px-4 py-3 bg-red-900/30 text-red-400 rounded-lg font-bold"
+                        >
+                            <Activity className="w-5 h-5" /> Back to Live Match
+                        </button>
+                    )}
+                    {navItems.map(item => (
+                        <button
+                            key={item.id}
+                            onClick={() => handleNav(item.id)}
+                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium ${activeView === item.id ? 'bg-white/10 text-white font-bold' : 'text-gray-400 hover:text-white'}`}
+                        >
+                            <item.icon className="w-5 h-5" />
+                            {item.label}
+                        </button>
+                    ))}
                 </div>
             )}
         </nav>
-    )
-}
+    );
+};
 
 const AppInner = () => {
     const { toast, confirm: showConfirm } = useToast();
     
-    // ─── Dark Mode State ──────────────────────────────────────────────────────
-    const [isDarkMode, setIsDarkMode] = useState(() => {
-        return localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    // ─── 5-Theme Engine (Default: 'light') ─────────────────────────────────────
+    const [theme, setTheme] = useState<AppTheme>(() => {
+        const saved = localStorage.getItem('arcricinfo_theme') as AppTheme;
+        if (saved && ['light', 'red', 'green', 'black', 'creamy'].includes(saved)) {
+            return saved;
+        }
+        return 'light';
     });
 
     useEffect(() => {
-        if (isDarkMode) {
-            document.documentElement.classList.add('dark');
+        const root = document.documentElement;
+        root.setAttribute('data-theme', theme);
+        localStorage.setItem('arcricinfo_theme', theme);
+
+        // Remove old theme classes
+        root.classList.remove('dark', 'theme-light', 'theme-red', 'theme-green', 'theme-black', 'theme-creamy');
+        root.classList.add(`theme-${theme}`);
+
+        // Set 'dark' for dark-based themes (red, green, black) so Tailwind dark: styles activate
+        if (theme === 'red' || theme === 'green' || theme === 'black') {
+            root.classList.add('dark');
             localStorage.setItem('theme', 'dark');
         } else {
-            document.documentElement.classList.remove('dark');
             localStorage.setItem('theme', 'light');
         }
-    }, [isDarkMode]);
+    }, [theme]);
 
-    const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
     const [liveViewMatchId, setLiveViewMatchId] = useState<string | null>(null);
     const [publicPlayerId, setPublicPlayerId] = useState<string | null>(null);
     const [isBroadcastMode, setIsBroadcastMode] = useState<boolean>(false);
@@ -649,6 +811,12 @@ const AppInner = () => {
     // ─── Auth State ───────────────────────────────────────────────────────────
     const [authUser, setAuthUser] = useState<{ id: string; email: string } | null>(null);
     const [isAuthLoading, setIsAuthLoading] = useState(true);
+    // Detects Google OAuth redirect — hash contains access_token before Supabase exchanges it
+    const [isOAuthRedirect, setIsOAuthRedirect] = useState(() =>
+        window.location.hash.includes('access_token') ||
+        window.location.hash.includes('error_description') ||
+        new URLSearchParams(window.location.search).get('code') !== null
+    );
 
     // ─── App Data State ───────────────────────────────────────────────────────
     const [match, setMatch] = useState<Match | null>(null);
@@ -769,8 +937,11 @@ const AppInner = () => {
         setIsPlayersLoading(true);
         try {
             const userId = user.id;
-            const fallbackName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Player';
+            const fallbackName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Player';
             const fallbackEmail = user.email || '';
+            // Use Google avatar if present (picture field from Google OAuth)
+            const googleAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture || '';
+            const fallbackAvatar = googleAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(fallbackName)}&background=random`;
 
             const [profile, matches, activeSeries, endedSeries, players, allTournaments, userTeams] = await Promise.all([
                 loadProfile(userId),
@@ -785,7 +956,6 @@ const AppInner = () => {
             if (profile) {
                 setUserProfile({ name: profile.name, email: profile.email, avatar: profile.avatar });
             } else {
-                const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(fallbackName)}&background=random`;
                 setUserProfile({ name: fallbackName, email: fallbackEmail, avatar: fallbackAvatar });
                 saveProfile(userId, { name: fallbackName, email: fallbackEmail, avatar: fallbackAvatar });
             }
@@ -814,14 +984,23 @@ const AppInner = () => {
                 loadUserData(session.user);
             }
             setIsAuthLoading(false);
+            setIsOAuthRedirect(false);
+            // Clean up OAuth hash/params from URL after exchange
+            if (window.location.hash.includes('access_token') || new URLSearchParams(window.location.search).get('code')) {
+                window.history.replaceState(null, '', window.location.pathname);
+            }
         });
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
             if (session?.user) {
                 setAuthUser({ id: session.user.id, email: session.user.email ?? '' });
                 loadUserData(session.user);
+                setShowAuthModal(false); // auto-close auth modal on successful OAuth login
             } else {
                 setAuthUser(null);
+            }
+            if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+                setIsOAuthRedirect(false);
             }
         });
         return () => subscription.unsubscribe();
@@ -1573,7 +1752,7 @@ const AppInner = () => {
     if (view === 'ABOUT') {
         return (
             <div className="min-h-screen bg-primary">
-                <Navbar activeView={view} onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
+                <Navbar activeView={view} onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} currentTheme={theme} onThemeChange={setTheme} />
                 <div className="p-4">
                     <AboutView />
                 </div>
@@ -1584,7 +1763,7 @@ const AppInner = () => {
     if (view === 'TEAMS') {
         return (
             <div className="min-h-screen bg-primary">
-                <Navbar activeView={view} onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
+                <Navbar activeView={view} onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} currentTheme={theme} onThemeChange={setTheme} />
                 <TeamsView 
                     teams={persistentTeams} 
                     isLoading={isPlayersLoading} 
@@ -1605,7 +1784,7 @@ const AppInner = () => {
     if (view === 'PROFILE') {
         return (
             <div className="min-h-screen bg-primary">
-                <Navbar activeView={view} onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
+                <Navbar activeView={view} onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} currentTheme={theme} onThemeChange={setTheme} />
                 {authUser ? (
                     <ProfileView
                         userProfile={userProfile}
@@ -1633,7 +1812,7 @@ const AppInner = () => {
     if (view === 'PLAYERS') {
         return (
             <div className="min-h-screen bg-primary">
-                <Navbar activeView={view} onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
+                <Navbar activeView={view} onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} currentTheme={theme} onThemeChange={setTheme} />
                 <PlayersView
                     players={dbPlayers}
                     isLoading={isPlayersLoading}
@@ -1649,7 +1828,7 @@ const AppInner = () => {
     if (view === 'PLAYER_PROFILE' && selectedPlayer) {
         return (
             <div className="min-h-screen bg-primary">
-                <Navbar activeView="HISTORY" onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
+                <Navbar activeView="HISTORY" onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} currentTheme={theme} onThemeChange={setTheme} />
                 <PlayerProfileView
                     player={selectedPlayer}
                     allPlayers={dbPlayers}
@@ -1667,7 +1846,7 @@ const AppInner = () => {
     if (view === 'NOTIFICATIONS') {
         return (
             <div className="min-h-screen bg-primary font-sans relative">
-                <Navbar activeView="NOTIFICATIONS" onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
+                <Navbar activeView="NOTIFICATIONS" onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} currentTheme={theme} onThemeChange={setTheme} />
                 <NotificationsView userProfile={userProfile} />
             </div>
         )
@@ -1677,7 +1856,7 @@ const AppInner = () => {
     if (view === 'COMMUNITY') {
         return (
             <div className="min-h-screen bg-primary">
-                <Navbar activeView="COMMUNITY" onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
+                <Navbar activeView="COMMUNITY" onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} currentTheme={theme} onThemeChange={setTheme} />
                 <CommunityBoard />
             </div>
         )
@@ -1686,7 +1865,7 @@ const AppInner = () => {
     if (view === 'TOURNAMENT_HOME') {
         return (
             <div className="min-h-screen bg-primary">
-                <Navbar activeView={view} onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
+                <Navbar activeView={view} onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} currentTheme={theme} onThemeChange={setTheme} />
                 <div className="max-w-4xl mx-auto px-4 py-8 animate-fade-in">
                     <div className="flex items-center justify-between mb-6">
                         <div>
@@ -1774,7 +1953,7 @@ const AppInner = () => {
     if (view === 'TOURNAMENT_SETUP') {
         return (
             <div className="min-h-screen bg-primary">
-                <Navbar activeView="TOURNAMENT_HOME" onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
+                <Navbar activeView="TOURNAMENT_HOME" onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} currentTheme={theme} onThemeChange={setTheme} />
                 <TournamentSetup
                     onTournamentCreate={handleTournamentCreate}
                     onBack={() => setView('TOURNAMENT_HOME')}
@@ -1786,7 +1965,7 @@ const AppInner = () => {
     if (view === 'TOURNAMENT_VIEW' && activeTournament) {
         return (
             <div className="min-h-screen bg-primary">
-                <Navbar activeView="TOURNAMENT_HOME" onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
+                <Navbar activeView="TOURNAMENT_HOME" onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} currentTheme={theme} onThemeChange={setTheme} />
                 <TournamentView
                     tournament={activeTournament}
                     matches={history.filter(m => m.tournamentId === activeTournament.id && m.status === MatchStatus.COMPLETED)}
@@ -1810,7 +1989,7 @@ const AppInner = () => {
     if (view === 'SETUP_TOURNAMENT_MATCH' && activeTournament && activeTournamentFixture) {
         return (
             <div className="min-h-screen bg-primary">
-                <Navbar activeView="TOURNAMENT_HOME" onViewChange={handleViewChange} isMatchActive={false} userProfile={userProfile} isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
+                <Navbar activeView="TOURNAMENT_HOME" onViewChange={handleViewChange} isMatchActive={false} userProfile={userProfile} currentTheme={theme} onThemeChange={setTheme} />
                 <div className="max-w-xl mx-auto px-4 py-6">
                     <div className="mb-4 flex items-center gap-2">
                         <button onClick={() => { setView('TOURNAMENT_VIEW'); setActiveTournamentFixture(null); }}
@@ -1866,7 +2045,7 @@ const AppInner = () => {
     if (view === 'SERIES_SUMMARY') {
         return (
             <div className="min-h-screen bg-primary">
-                <Navbar activeView="HOME" onViewChange={handleViewChange} isMatchActive={false} userProfile={userProfile} isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
+                <Navbar activeView="HOME" onViewChange={handleViewChange} isMatchActive={false} userProfile={userProfile} currentTheme={theme} onThemeChange={setTheme} />
                 <div className="max-w-4xl mx-auto p-4 md:p-8 animate-fade-in">
                     <div className="bg-white rounded-2xl shadow-xl overflow-hidden text-center">
                         <div className="bg-gradient-to-br from-indigo-900 to-purple-900 text-white p-12">
@@ -1966,7 +2145,7 @@ const AppInner = () => {
 
         return (
             <div className="min-h-screen bg-primary">
-                <Navbar activeView={view} onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
+                <Navbar activeView={view} onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} currentTheme={theme} onThemeChange={setTheme} />
                 <div className="max-w-5xl mx-auto p-4 md:p-8 animate-fade-in">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                         <h2 className="text-3xl font-bold text-accent flex items-center gap-3">
@@ -2143,7 +2322,8 @@ const AppInner = () => {
     }
 
     // ─── Auth Guard ───────────────────────────────────────────────────────────
-    if (isAuthLoading) {
+    if (isAuthLoading || isOAuthRedirect) {
+        const isGoogleCallback = isOAuthRedirect && !isAuthLoading;
         return (
             <div className="min-h-screen flex flex-col items-center justify-center"
                 style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 40%, #0c2340 70%, #0f172a 100%)' }}
@@ -2158,7 +2338,14 @@ const AppInner = () => {
                     />
                 </div>
                 <Loader2 className="w-8 h-8 text-yellow-400 animate-spin mb-4" />
-                <p className="text-slate-400 text-sm font-medium tracking-wider">Loading ARcricinfo...</p>
+                {isGoogleCallback ? (
+                    <div className="text-center">
+                        <p className="text-white text-sm font-semibold mb-1">Signing you in with Google...</p>
+                        <p className="text-slate-400 text-xs">Please wait, setting up your account.</p>
+                    </div>
+                ) : (
+                    <p className="text-slate-400 text-sm font-medium tracking-wider">Loading ARcricinfo...</p>
+                )}
             </div>
         );
     }
@@ -2168,7 +2355,7 @@ const AppInner = () => {
     return (
         <div className="min-h-screen bg-primary font-sans relative">
             <AnimationOverlay event={animEvent} onComplete={handleAnimComplete} />
-            <Navbar activeView={match ? 'LIVE' : 'HOME'} onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
+            <Navbar activeView={match ? 'LIVE' : 'HOME'} onViewChange={handleViewChange} isMatchActive={!!match && match.status === MatchStatus.LIVE} userProfile={userProfile} currentTheme={theme} onThemeChange={setTheme} />
 
             {!match ? (
                 <div className="flex flex-col items-center justify-center min-h-[85vh] p-4 animate-fade-in bg-gray-50 dark:bg-slate-900 transition-colors">

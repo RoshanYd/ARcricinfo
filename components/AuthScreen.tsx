@@ -3,6 +3,17 @@ import { supabase } from '../utils/supabase';
 import { saveProfile } from '../utils/db';
 import { Trophy, Eye, EyeOff, Mail, Lock, User, ArrowRight, Loader2, CheckCircle, AlertCircle, RotateCcw, Phone, Smartphone } from 'lucide-react';
 
+// Google "G" SVG icon
+const GoogleIcon = () => (
+    <svg viewBox="0 0 48 48" className="w-5 h-5" xmlns="http://www.w3.org/2000/svg">
+        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        <path fill="none" d="M0 0h48v48H0z"/>
+    </svg>
+);
+
 type AuthMode = 'LOGIN' | 'SIGNUP' | 'FORGOT' | 'OTP_VERIFY' | 'RESET_PASSWORD';
 type AuthMethod = 'EMAIL' | 'MOBILE';
 
@@ -60,6 +71,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess }) => {
     const [showConfirm, setShowConfirm] = useState(false);
     
     const [loading, setLoading] = useState(false);
+    const [googleLoading, setGoogleLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
     const [successMsg, setSuccessMsg] = useState('');
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -109,6 +121,28 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess }) => {
 
     const generateMockAuthEmail = () => {
         return authMethod === 'EMAIL' ? email : `${mobile}@mock-mobile.arcricinfo.com`;
+    };
+
+    const handleGoogleSignIn = async () => {
+        setGoogleLoading(true);
+        setErrorMsg('');
+        try {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: window.location.origin,
+                    queryParams: {
+                        access_type: 'offline',
+                        prompt: 'consent',
+                    },
+                },
+            });
+            if (error) throw error;
+            // Supabase will redirect to Google — no further action needed here
+        } catch (err: any) {
+            setErrorMsg(err.message || 'Google sign-in failed. Please try again.');
+            setGoogleLoading(false);
+        }
     };
 
     const handleSendOTP = async () => {
@@ -299,6 +333,16 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess }) => {
                 <div className="rounded-2xl p-8 shadow-2xl"
                     style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(20px)' }}
                 >
+                    {/* Google redirect in-progress banner */}
+                    {googleLoading && (
+                        <div className="mb-5 p-4 rounded-xl flex items-center gap-3 border border-blue-500/30 bg-blue-500/10">
+                            <Loader2 className="w-5 h-5 text-blue-400 animate-spin shrink-0" />
+                            <div>
+                                <p className="text-blue-300 text-sm font-semibold">Redirecting to Google…</p>
+                                <p className="text-blue-400/70 text-xs">You'll be brought back automatically after sign-in.</p>
+                            </div>
+                        </div>
+                    )}
                     {mode !== 'OTP_VERIFY' && (
                         <div className="flex bg-white/5 rounded-xl p-1 mb-6 border border-white/5">
                             {(['MOBILE', 'EMAIL'] as AuthMethod[]).map(m => (
@@ -449,6 +493,41 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess }) => {
                             )}
                         </button>
                     </form>
+
+                    {/* ─── Divider ─────────────────────────────────────────── */}
+                    {mode !== 'OTP_VERIFY' && mode !== 'FORGOT' && (
+                        <div className="my-5 flex items-center gap-3">
+                            <div className="flex-1 h-px bg-white/10" />
+                            <span className="text-xs text-slate-400 font-medium shrink-0">or continue with</span>
+                            <div className="flex-1 h-px bg-white/10" />
+                        </div>
+                    )}
+
+                    {/* ─── Google Button ───────────────────────────────────── */}
+                    {mode !== 'OTP_VERIFY' && mode !== 'FORGOT' && (
+                        <button
+                            type="button"
+                            onClick={handleGoogleSignIn}
+                            disabled={googleLoading || loading}
+                            className="w-full flex items-center justify-between py-3.5 px-4 rounded-xl border border-white/20 bg-white/8 hover:bg-white/15 hover:border-white/30 text-white font-semibold text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99] shadow-lg group"
+                        >
+                            <div className="flex items-center gap-3 min-w-0">
+                                {googleLoading ? (
+                                    <Loader2 className="w-5 h-5 animate-spin text-slate-300 shrink-0" />
+                                ) : (
+                                    <div className="shrink-0">
+                                        <GoogleIcon />
+                                    </div>
+                                )}
+                                <span className="font-semibold text-sm truncate">
+                                    {googleLoading ? 'Redirecting to Google…' : 'Continue with Google'}
+                                </span>
+                            </div>
+                            <span className="ml-2 text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 rounded-full shrink-0">
+                                ⚡ Recommended
+                            </span>
+                        </button>
+                    )}
 
                     {mode !== 'OTP_VERIFY' && (
                         <div className="mt-6 text-center">

@@ -8,6 +8,19 @@
 
 ARcricinfo is a comprehensive tool designed for cricket enthusiasts, tournament organizers, and players who want an authentic, digital recording of their matches. 
 
+### 🎨 5-Theme System
+- **Theme Customization:** Seamlessly switch between 5 professionally tuned visual themes with persistent settings:
+  1. ☀️ **Light (Default):** Clean, crisp modern white & slate navy aesthetic.
+  2. 🔴 **Red Theme:** Passionate cricket crimson with ruby accents and high-contrast rose highlights.
+  3. 🟢 **Green Theme:** Turf pitch stadium green with emerald cards and mint-white typography.
+  4. ⚫ **Black Theme:** Midnight dark OLED obsidian styling with cricket gold accents.
+  5. 🍦 **Creamy Theme:** Vintage Lord's & Test match warm ivory parchment with mahogany leather notes.
+- **Flawless Contrast:** Every batsman card, bowling card, table, modal, and badge dynamically adapts for 100% legibility in all themes.
+
+### 🔐 Multi-Provider Authentication
+- **Continue with Google:** One-tap OAuth 2.0 integration via Supabase with automatic avatar and profile provisioning.
+- **Mobile & Email Sign-in:** Support for password-based, OTP verification, and account recovery flows.
+
 ### 🏏 Match Scoring & Engine
 - **Advanced Match Setup:** Full configuration for total overs, squad sizes (up to 25 players), and custom team names.
 - **Deep Scoring Logic:** Handles extras (wides, no-balls with run penalties), byes, leg-byes, and various dismissal types (Bowled, Caught, LBW, Run Out, Stumped, Hit Wicket, Obstructing Field, Retired Hurt).

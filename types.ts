@@ -235,3 +235,6 @@ export interface CommunityPost {
   status: 'OPEN' | 'ACCEPTED';
   createdAt: number;
 }
+
+export type AppTheme = 'light' | 'red' | 'green' | 'black' | 'creamy';
+
