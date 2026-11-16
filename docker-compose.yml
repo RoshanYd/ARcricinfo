@@ -1,0 +1,65 @@
+# ─── ARcricinfo Docker Compose ───────────────────────────────────────────────
+# Runs the full stack locally: frontend (Nginx) + backend (Node/Socket.IO)
+# Usage:
+#   docker compose up --build
+#   docker compose down
+#
+# Secrets must be set in a local .env file (never committed to git):
+#   VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, SUPABASE_URL,
+#   SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY
+
+services:
+
+  # ── Frontend (React / Vite → Nginx static serve) ──────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
+    image: arcricinfo-frontend:latest
+    container_name: arcricinfo-frontend
+    ports:
+      - "3001:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - arcricinfo-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ── Backend (Express + Socket.IO) ──────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: arcricinfo-backend:latest
+    container_name: arcricinfo-backend
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+    restart: unless-stopped
+    networks:
+      - arcricinfo-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+networks:
+  arcricinfo-net:
+    driver: bridge

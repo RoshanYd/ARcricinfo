@@ -1,0 +1,29 @@
+# .dockerignore — files excluded from Docker build context
+# This keeps images lean and prevents secrets from leaking into image layers
+
+# Secrets (never bake into image)
+.env
+.env.*
+.env.local
+backend/.env
+
+# Dev-only
+node_modules/
+backend/node_modules/
+npm-debug.log*
+
+# Source-control metadata
+.git/
+.gitignore
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Already-built artifacts (CI rebuilds from source)
+dist/
+
+# Docs
+*.md

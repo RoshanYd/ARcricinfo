@@ -1,0 +1,64 @@
+# ─── Frontend Deployment (React → Nginx) ─────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: arcricinfo-frontend
+  namespace: arcricinfo
+  labels:
+    app: arcricinfo-frontend
+    tier: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: arcricinfo-frontend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: arcricinfo-frontend
+        tier: frontend
+    spec:
+      # Drop all Linux capabilities; run as non-root
+      securityContext:
+        runAsNonRoot: false   # Nginx needs root to bind port 80; override per-container below
+        fsGroup: 101          # nginx group
+      containers:
+        - name: frontend
+          image: ghcr.io/roshanyd/arcricinfo-frontend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: arcricinfo-frontend-config
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 15
+            timeoutSeconds: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false   # Nginx writes tmp files
+      restartPolicy: Always

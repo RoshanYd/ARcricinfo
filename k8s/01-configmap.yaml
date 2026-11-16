@@ -1,0 +1,12 @@
+# ─── Frontend ConfigMap ───────────────────────────────────────────────────────
+# Non-sensitive runtime config. Supabase URL & anon key are public by design
+# (they are exposed in the browser bundle anyway — anon key is row-level-security
+#  gated; it is NOT a secret).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: arcricinfo-frontend-config
+  namespace: arcricinfo
+data:
+  NGINX_PORT: "80"
+  APP_ENV: "production"

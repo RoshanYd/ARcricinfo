@@ -1,0 +1,23 @@
+# ─── Pod Disruption Budgets ───────────────────────────────────────────────────
+# Ensure at least 1 pod stays up during rolling deploys or node drains
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: arcricinfo-frontend-pdb
+  namespace: arcricinfo
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: arcricinfo-frontend
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: arcricinfo-backend-pdb
+  namespace: arcricinfo
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: arcricinfo-backend

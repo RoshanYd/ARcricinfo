@@ -1,52 +1,92 @@
-# Logs
-logs
-*.log
+# ─── Node ───────────────────────────────────────────────────────────────────
+node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-
-node_modules
-dist
-dist-ssr
 *.local
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-# Environment Variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-.env.*
-
-# Secrets & Keys
-*.pem
-*.key
-*.cert
-*.crt
-secret.json
-service-account.json
-
-# Build outputs
+# ─── Build / dist ───────────────────────────────────────────────────────────
 build/
 dist/
 dist-ssr/
 
-# SQLite / Database
+# ─── Environment Variables & Secrets (NEVER commit these) ───────────────────
+.env
+.env.*
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.production
+.env.production.local
+.env.staging
+backend/.env
+backend/.env.*
+
+# ─── Keys & Certificates ────────────────────────────────────────────────────
+*.pem
+*.key
+*.cert
+*.crt
+*.p12
+*.pfx
+*.jks
+secret.json
+secrets.json
+service-account.json
+credentials.json
+firebase-adminsdk*.json
+
+# ─── API Keys & Tokens ──────────────────────────────────────────────────────
+*_secret*
+*_key*
+*token*
+*.secret
+
+# ─── Database ───────────────────────────────────────────────────────────────
 *.sqlite
 *.sqlite3
 *.db
 *.db3
 database.sqlite
+
+# ─── OS / Editor ────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# ─── Logs ───────────────────────────────────────────────────────────────────
+logs/
+*.log
+compile_error.log
+dev.log
+tsc-errors.txt
+
+# ─── Docker ─────────────────────────────────────────────────────────────────
+# (Dockerfiles ARE committed; only runtime secrets/volumes are excluded)
+docker-compose.override.yml
+
+# ─── Kubernetes ─────────────────────────────────────────────────────────────
+# Sealed secrets and local kubeconfig overrides
+k8s/secrets-*.yaml
+k8s/secret-*.yaml
+kubeconfig
+*.kubeconfig
+
+# ─── Coverage / Testing ─────────────────────────────────────────────────────
+coverage/
+.nyc_output/
+
+# ─── Misc ───────────────────────────────────────────────────────────────────
+*.tgz
+*.tar.gz

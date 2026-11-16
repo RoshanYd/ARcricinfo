@@ -1,0 +1,18 @@
+# ─── Backend Service ──────────────────────────────────────────────────────────
+# ClusterIP keeps the backend internal; only the Ingress routes traffic in
+apiVersion: v1
+kind: Service
+metadata:
+  name: arcricinfo-backend-svc
+  namespace: arcricinfo
+  labels:
+    app: arcricinfo-backend
+spec:
+  selector:
+    app: arcricinfo-backend
+  ports:
+    - name: http
+      port: 4000
+      targetPort: 4000
+      protocol: TCP
+  type: ClusterIP
