@@ -452,6 +452,122 @@
       html.theme-creamy ::-webkit-scrollbar-thumb, html[data-theme="creamy"] ::-webkit-scrollbar-thumb {
         background: #D6C4AD;
       }
+
+      /* ── Universal Hover & Selection Contrast Overrides for All 5 Themes ── */
+      /* Light */
+      html.theme-light .hover\:bg-blue-50:hover,
+      html:not([data-theme]) .hover\:bg-blue-50:hover {
+        background-color: #EFF6FF !important;
+        border-color: #93C5FD !important;
+      }
+      html.theme-light .hover\:bg-blue-50:hover *,
+      html:not([data-theme]) .hover\:bg-blue-50:hover * {
+        color: #1E3A8A !important;
+      }
+
+      /* Red */
+      html.theme-red .hover\:bg-blue-50:hover,
+      html.theme-red .hover\:bg-gray-50:hover,
+      html.theme-red .hover\:bg-gray-100:hover,
+      html.theme-red .hover\:bg-slate-50:hover,
+      html.theme-red .hover\:bg-slate-700:hover,
+      html[data-theme="red"] .hover\:bg-blue-50:hover,
+      html[data-theme="red"] .hover\:bg-gray-50:hover,
+      html[data-theme="red"] .hover\:bg-gray-100:hover,
+      html[data-theme="red"] .hover\:bg-slate-50:hover,
+      html[data-theme="red"] .hover\:bg-slate-700:hover {
+        background-color: rgba(225, 29, 72, 0.25) !important;
+        border-color: #BE123C !important;
+        color: #FFF1F2 !important;
+      }
+      html.theme-red .hover\:bg-blue-50:hover *,
+      html.theme-red .hover\:bg-gray-50:hover *,
+      html[data-theme="red"] .hover\:bg-blue-50:hover *,
+      html[data-theme="red"] .hover\:bg-gray-50:hover * {
+        color: #FFF1F2 !important;
+      }
+      html.theme-red .hover\:border-blue-300:hover,
+      html[data-theme="red"] .hover\:border-blue-300:hover {
+        border-color: #E11D48 !important;
+      }
+
+      /* Green */
+      html.theme-green .hover\:bg-blue-50:hover,
+      html.theme-green .hover\:bg-gray-50:hover,
+      html.theme-green .hover\:bg-gray-100:hover,
+      html.theme-green .hover\:bg-slate-50:hover,
+      html.theme-green .hover\:bg-slate-700:hover,
+      html[data-theme="green"] .hover\:bg-blue-50:hover,
+      html[data-theme="green"] .hover\:bg-gray-50:hover,
+      html[data-theme="green"] .hover\:bg-gray-100:hover,
+      html[data-theme="green"] .hover\:bg-slate-50:hover,
+      html[data-theme="green"] .hover\:bg-slate-700:hover {
+        background-color: rgba(16, 185, 129, 0.25) !important;
+        border-color: #059669 !important;
+        color: #ECFDF5 !important;
+      }
+      html.theme-green .hover\:bg-blue-50:hover *,
+      html.theme-green .hover\:bg-gray-50:hover *,
+      html[data-theme="green"] .hover\:bg-blue-50:hover *,
+      html[data-theme="green"] .hover\:bg-gray-50:hover * {
+        color: #ECFDF5 !important;
+      }
+      html.theme-green .hover\:border-blue-300:hover,
+      html[data-theme="green"] .hover\:border-blue-300:hover {
+        border-color: #10B981 !important;
+      }
+
+      /* Black */
+      html.theme-black .hover\:bg-blue-50:hover,
+      html.theme-black .hover\:bg-gray-50:hover,
+      html.theme-black .hover\:bg-gray-100:hover,
+      html.theme-black .hover\:bg-slate-50:hover,
+      html.theme-black .hover\:bg-slate-700:hover,
+      html[data-theme="black"] .hover\:bg-blue-50:hover,
+      html[data-theme="black"] .hover\:bg-gray-50:hover,
+      html[data-theme="black"] .hover\:bg-gray-100:hover,
+      html[data-theme="black"] .hover\:bg-slate-50:hover,
+      html[data-theme="black"] .hover\:bg-slate-700:hover {
+        background-color: rgba(250, 204, 21, 0.18) !important;
+        border-color: #EAB308 !important;
+        color: #FAFAFA !important;
+      }
+      html.theme-black .hover\:bg-blue-50:hover *,
+      html.theme-black .hover\:bg-gray-50:hover *,
+      html[data-theme="black"] .hover\:bg-blue-50:hover *,
+      html[data-theme="black"] .hover\:bg-gray-50:hover * {
+        color: #FAFAFA !important;
+      }
+      html.theme-black .hover\:border-blue-300:hover,
+      html[data-theme="black"] .hover\:border-blue-300:hover {
+        border-color: #FACC15 !important;
+      }
+
+      /* Creamy */
+      html.theme-creamy .hover\:bg-blue-50:hover,
+      html.theme-creamy .hover\:bg-gray-50:hover,
+      html.theme-creamy .hover\:bg-gray-100:hover,
+      html.theme-creamy .hover\:bg-slate-50:hover,
+      html.theme-creamy .hover\:bg-slate-700:hover,
+      html[data-theme="creamy"] .hover\:bg-blue-50:hover,
+      html[data-theme="creamy"] .hover\:bg-gray-50:hover,
+      html[data-theme="creamy"] .hover\:bg-gray-100:hover,
+      html[data-theme="creamy"] .hover\:bg-slate-50:hover,
+      html[data-theme="creamy"] .hover\:bg-slate-700:hover {
+        background-color: rgba(120, 53, 15, 0.15) !important;
+        border-color: #8B4513 !important;
+        color: #2C1E14 !important;
+      }
+      html.theme-creamy .hover\:bg-blue-50:hover *,
+      html.theme-creamy .hover\:bg-gray-50:hover *,
+      html[data-theme="creamy"] .hover\:bg-blue-50:hover *,
+      html[data-theme="creamy"] .hover\:bg-gray-50:hover * {
+        color: #2C1E14 !important;
+      }
+      html.theme-creamy .hover\:border-blue-300:hover,
+      html[data-theme="creamy"] .hover\:border-blue-300:hover {
+        border-color: #78350F !important;
+      }
     </style>
   <script type="importmap">
 {

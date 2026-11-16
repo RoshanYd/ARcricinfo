@@ -22,6 +22,8 @@ ARcricinfo is a comprehensive tool designed for cricket enthusiasts, tournament 
 - **Mobile & Email Sign-in:** Support for password-based, OTP verification, and account recovery flows.
 
 ### 🏏 Match Scoring & Engine
+- **Dynamic Squad Size & All-Out Rules:** Authentic cricket match rules adapting automatically to any squad size $N$ (from 2 to 25 players per side). A side is ruled **All Out** when $N - 1$ wickets fall (as standard cricket requires 2 batsmen on the field, so a single batsman cannot bat alone). No player selection modal is ever shown when all batsmen are out; the engine immediately transitions from Innings 1 to Innings 2 with target calculation, or concludes the match with victory margins in Innings 2.
+- **Theme-Adaptive Modals & Hover States:** High-contrast hover and selection highlights across all 5 themes (Light, Red, Green, Black, Creamy) with zero color washout.
 - **Advanced Match Setup:** Full configuration for total overs, squad sizes (up to 25 players), and custom team names.
 - **Deep Scoring Logic:** Handles extras (wides, no-balls with run penalties), byes, leg-byes, and various dismissal types (Bowled, Caught, LBW, Run Out, Stumped, Hit Wicket, Obstructing Field, Retired Hurt).
 - **Match Dashboards:** Live visualization of Run Rate (CRR/RRR), Projected Scores, Partnerships, and Fall of Wickets.

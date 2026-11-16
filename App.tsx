@@ -68,10 +68,10 @@ const PlayerSelectModal = ({
 
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-md p-6 animate-scale-up border dark:border-slate-700">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md p-6 animate-scale-up border border-gray-200 dark:border-white/10">
                 {!selectedId ? (
                     <>
-                        <h3 className="text-xl font-bold mb-4 text-accent dark:text-blue-400">Select {label}</h3>
+                        <h3 className="text-xl font-black mb-4 text-accent">Select {label}</h3>
                         <div className="max-h-60 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
                             {players.map(p => {
                                 const isBatsmanOut = !ignoreStats && variant === 'BATSMAN' && p.isOut;
@@ -79,26 +79,40 @@ const PlayerSelectModal = ({
                                 const isDisabled = isBatsmanOut || isDisabledByProp;
 
                                 let statusText = '';
-                                if (isBatsmanOut) statusText = '(Out)';
-                                else if (isDisabledByProp && variant === 'BOWLER') statusText = '(Bowled Last Over)';
+                                if (isBatsmanOut) statusText = 'Out';
+                                else if (isDisabledByProp && variant === 'BOWLER') statusText = 'Bowled Last Over';
 
                                 return (
                                     <button
                                         key={p.id}
                                         onClick={() => handleSelect(p.id)}
                                         disabled={isDisabled}
-                                        className={`w-full p-3 text-left rounded-lg border flex items-center gap-3 transition-colors ${isDisabled ? 'bg-gray-100 dark:bg-slate-800/50 text-gray-400 dark:text-gray-600 border-gray-200 dark:border-slate-700 cursor-not-allowed' : 'bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 border-gray-200 dark:border-slate-600 text-gray-900 dark:text-white group'}`}
+                                        className={`w-full p-3 text-left rounded-xl border flex items-center gap-3 transition-all ${
+                                            isDisabled
+                                                ? 'opacity-40 cursor-not-allowed bg-black/5 dark:bg-white/5 border-gray-200 dark:border-white/5'
+                                                : 'border-gray-200 dark:border-white/10 hover:border-accent hover:bg-accent/15 active:bg-accent/25 cursor-pointer group'
+                                        }`}
                                     >
-                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center border ${isDisabled ? 'bg-gray-200 dark:bg-slate-700 border-gray-300 dark:border-slate-600' : 'bg-gray-100 dark:bg-slate-700 border-gray-300 dark:border-slate-500 group-hover:bg-white dark:group-hover:bg-slate-600'}`}>
+                                        <div className={`w-9 h-9 rounded-full flex items-center justify-center border shrink-0 ${
+                                            isDisabled
+                                                ? 'border-gray-300 dark:border-white/10 bg-gray-100 dark:bg-white/5'
+                                                : 'border-gray-300 dark:border-white/10 bg-gray-50 dark:bg-white/10 group-hover:border-accent group-hover:bg-accent/20'
+                                        }`}>
                                             {p.avatar ? (
                                                 <img src={p.avatar} alt="" className="w-full h-full rounded-full object-cover" />
                                             ) : (
-                                                <User className="w-4 h-4 text-gray-400" />
+                                                <User className={`w-4 h-4 ${isDisabled ? 'text-gray-400' : 'text-gray-600 dark:text-gray-300 group-hover:text-accent'}`} />
                                             )}
                                         </div>
-                                        <div>
-                                            <div className="font-semibold">{p.name}</div>
-                                            {statusText && <div className="text-xs font-bold dark:text-gray-400">{statusText}</div>}
+                                        <div className="flex-1 flex items-center justify-between min-w-0">
+                                            <div className={`font-bold truncate ${isDisabled ? 'text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-white group-hover:text-accent transition-colors'}`}>
+                                                {p.name}
+                                            </div>
+                                            {statusText && (
+                                                <span className="text-[11px] font-black px-2 py-0.5 rounded-full bg-red-500/20 text-red-500 dark:text-red-400 border border-red-500/30 uppercase tracking-wide shrink-0">
+                                                    {statusText}
+                                                </span>
+                                            )}
                                         </div>
                                     </button>
                                 );
@@ -107,16 +121,16 @@ const PlayerSelectModal = ({
                     </>
                 ) : (
                     <div className="text-center animate-fade-in">
-                        <h3 className="text-xl font-bold mb-2 text-accent dark:text-blue-400">Confirm Selection</h3>
+                        <h3 className="text-xl font-black mb-2 text-accent">Confirm Selection</h3>
                         <p className="text-gray-600 dark:text-gray-300 mb-6">Select <span className="font-bold text-gray-900 dark:text-white">{selectedPlayer?.name}</span> as {label}?</p>
 
                         <div className="flex justify-center mb-6">
-                            <div className="w-20 h-20 rounded-full border-4 border-gray-100 dark:border-slate-700 overflow-hidden shadow-sm">
+                            <div className="w-20 h-20 rounded-full border-4 border-gray-200 dark:border-white/10 overflow-hidden shadow-sm">
                                 {selectedPlayer?.avatar ? (
                                     <img src={selectedPlayer.avatar} alt="" className="w-full h-full object-cover" />
                                 ) : (
-                                    <div className="w-full h-full bg-gray-50 dark:bg-slate-700 flex items-center justify-center">
-                                        <User className="w-8 h-8 text-gray-300 dark:text-gray-500" />
+                                    <div className="w-full h-full bg-gray-100 dark:bg-white/5 flex items-center justify-center">
+                                        <User className="w-8 h-8 text-gray-400" />
                                     </div>
                                 )}
                             </div>
@@ -125,13 +139,13 @@ const PlayerSelectModal = ({
                         <div className="grid grid-cols-2 gap-3">
                             <button
                                 onClick={handleCancel}
-                                className="py-3 px-4 rounded-lg font-bold border border-gray-300 dark:border-slate-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
+                                className="py-3 px-4 rounded-xl font-bold border border-gray-300 dark:border-white/20 text-gray-700 dark:text-gray-200 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
                             >
                                 No, Change
                             </button>
                             <button
                                 onClick={handleConfirm}
-                                className="py-3 px-4 rounded-lg font-bold bg-accent text-white hover:bg-accent/90 shadow-lg transition-transform active:scale-95"
+                                className="py-3 px-4 rounded-xl font-bold bg-accent text-white hover:opacity-95 shadow-lg transition-transform active:scale-95"
                             >
                                 Yes, Confirm
                             </button>
@@ -1048,6 +1062,88 @@ const AppInner = () => {
     }, [series]);
     useEffect(() => { localStorage.setItem('completed_series_history', JSON.stringify(completedSeries)); }, [completedSeries]);
 
+    // ─── Reactive Cricket Rule Engine: Auto-Complete All Out & Innings ───────
+    // In cricket with N players per squad, when N - 1 wickets fall, the side is ALL OUT
+    // (a lone batsman cannot bat without a partner). If all available batsmen are out,
+    // conclude the innings or finalize the match with the winner immediately.
+    useEffect(() => {
+        if (!match || match.status !== MatchStatus.LIVE) return;
+
+        const isSuperOver = match.currentInnings > 2;
+        const battingTeam = match.teamA.isBatting ? match.teamA : match.teamB;
+        const bowlingTeam = match.teamA.isBatting ? match.teamB : match.teamA;
+
+        const oversLimit = isSuperOver ? 1 : match.totalOvers;
+        const squadSize = battingTeam.players.length;
+        const maxWicketsForSquad = Math.max(1, squadSize - 1);
+        const wicketsLimit = isSuperOver ? Math.min(2, maxWicketsForSquad) : maxWicketsForSquad;
+
+        const currentBalls = isSuperOver ? battingTeam.superOverBalls : battingTeam.overs;
+        const currentWickets = isSuperOver ? battingTeam.superOverWickets : battingTeam.wickets;
+
+        const availableBatsmen = battingTeam.players.filter(p => (isSuperOver ? true : !p.isOut) && p.id !== match.currentNonStrikerId);
+        const isAllOut = currentWickets >= wicketsLimit || (!match.currentStrikerId && availableBatsmen.length === 0);
+        const isOversDone = currentBalls >= oversLimit * 6;
+
+        if (isAllOut || isOversDone) {
+            const newMatch = JSON.parse(JSON.stringify(match)) as Match;
+            if (newMatch.currentInnings === 1) {
+                newMatch.currentInnings = 2;
+                newMatch.teamA.isBatting = !newMatch.teamA.isBatting;
+                newMatch.teamB.isBatting = !newMatch.teamB.isBatting;
+                newMatch.currentStrikerId = undefined;
+                newMatch.currentNonStrikerId = undefined;
+                newMatch.currentBowlerId = undefined;
+                const target = battingTeam.totalRuns + 1;
+                setAnimEvent({ type: 'INNINGS_BREAK', message: `${battingTeam.name} All Out! Target: ${target}` });
+                setMatch(newMatch);
+            } else if (newMatch.currentInnings === 2) {
+                if (battingTeam.totalRuns < bowlingTeam.totalRuns) {
+                    newMatch.status = MatchStatus.COMPLETED;
+                    newMatch.winningTeamId = bowlingTeam.id;
+                    newMatch.manOfTheMatchId = determineManOfTheMatch(newMatch);
+                    const runsDiff = bowlingTeam.totalRuns - battingTeam.totalRuns;
+                    setAnimEvent({ type: 'WIN', message: `${bowlingTeam.name} WINS by ${runsDiff} runs! (All Out)` });
+                    setMatch(newMatch);
+                    saveToHistory(newMatch);
+                } else if (battingTeam.totalRuns > bowlingTeam.totalRuns) {
+                    newMatch.status = MatchStatus.COMPLETED;
+                    newMatch.winningTeamId = battingTeam.id;
+                    newMatch.manOfTheMatchId = determineManOfTheMatch(newMatch);
+                    const wicketsRemaining = Math.max(0, wicketsLimit - currentWickets);
+                    setAnimEvent({ type: 'WIN', message: `${battingTeam.name} WINS by ${wicketsRemaining} wickets!` });
+                    setMatch(newMatch);
+                    saveToHistory(newMatch);
+                } else {
+                    newMatch.status = MatchStatus.TIED;
+                    setAnimEvent({ type: 'NONE', message: 'SCORES TIED!' });
+                    setMatch(newMatch);
+                }
+            } else if (newMatch.currentInnings === 3) {
+                newMatch.currentInnings = 4;
+                newMatch.teamA.isBatting = false;
+                newMatch.teamB.isBatting = true;
+                newMatch.currentStrikerId = undefined;
+                newMatch.currentNonStrikerId = undefined;
+                newMatch.currentBowlerId = undefined;
+                const target = battingTeam.superOverRuns + 1;
+                setAnimEvent({ type: 'INNINGS_BREAK', message: `SO Target: ${target}` });
+                setMatch(newMatch);
+            } else if (newMatch.currentInnings === 4) {
+                newMatch.status = MatchStatus.COMPLETED;
+                if (battingTeam.superOverRuns < bowlingTeam.superOverRuns) {
+                    newMatch.winningTeamId = bowlingTeam.id;
+                    setAnimEvent({ type: 'WIN', message: `${bowlingTeam.name} WINS SUPER OVER!` });
+                } else {
+                    setAnimEvent({ type: 'NONE', message: 'SUPER OVER TIED!' });
+                }
+                newMatch.manOfTheMatchId = determineManOfTheMatch(newMatch);
+                setMatch(newMatch);
+                saveToHistory(newMatch);
+            }
+        }
+    }, [match]);
+
     // ─── Logout ───────────────────────────────────────────────────────────────
     const handleLogout = async () => {
         await supabase.auth.signOut();
@@ -1584,12 +1680,21 @@ const AppInner = () => {
 
         // Check End of Innings (Wickets or Overs)
         const oversLimit = isSuperOver ? 1 : newMatch.totalOvers;
-        const wicketsLimit = isSuperOver ? 2 : 10; // Usually 2 wickets in super over, keeping standard rules
+        // In cricket with N players per team, a side is ALL OUT when N - 1 wickets fall
+        // because 2 batsmen must be on the pitch; a single remaining batsman cannot bat alone.
+        const squadSize = battingTeam.players.length;
+        const maxWicketsForSquad = Math.max(1, squadSize - 1);
+        const wicketsLimit = isSuperOver ? Math.min(2, maxWicketsForSquad) : maxWicketsForSquad;
 
         const currentBalls = isSuperOver ? battingTeam.superOverBalls : battingTeam.overs;
         const currentWickets = isSuperOver ? battingTeam.superOverWickets : battingTeam.wickets;
 
-        if (newMatch.status !== MatchStatus.COMPLETED && (currentWickets >= wicketsLimit || currentBalls >= oversLimit * 6)) {
+        // Check if any available batsman is left to partner on the pitch
+        const availableBatsmen = battingTeam.players.filter(p => (isSuperOver ? true : !p.isOut) && p.id !== newMatch.currentNonStrikerId);
+        const isAllOut = currentWickets >= wicketsLimit || (isWicket && availableBatsmen.length === 0);
+        const isOversDone = currentBalls >= oversLimit * 6;
+
+        if (newMatch.status !== MatchStatus.COMPLETED && (isAllOut || isOversDone)) {
 
             // End Innings 1 -> Start Innings 2
             if (newMatch.currentInnings === 1) {
@@ -1604,7 +1709,8 @@ const AppInner = () => {
                 newMatch.currentBowlerId = undefined;
 
                 const target = battingTeam.totalRuns + 1;
-                setAnimEvent({ type: 'INNINGS_BREAK', message: `Target: ${target}` });
+                const reason = isAllOut ? `${battingTeam.name} All Out! ` : '';
+                setAnimEvent({ type: 'INNINGS_BREAK', message: `${reason}Target: ${target}` });
             }
             // End Innings 2 -> Check Result
             else if (newMatch.currentInnings === 2) {
@@ -1612,7 +1718,16 @@ const AppInner = () => {
                     newMatch.status = MatchStatus.COMPLETED;
                     newMatch.winningTeamId = bowlingTeam.id;
                     newMatch.manOfTheMatchId = determineManOfTheMatch(newMatch);
-                    setAnimEvent({ type: 'WIN', message: `${bowlingTeam.name} WINS!` });
+                    const runsDiff = bowlingTeam.totalRuns - battingTeam.totalRuns;
+                    const reason = isAllOut ? ' (All Out)' : '';
+                    setAnimEvent({ type: 'WIN', message: `${bowlingTeam.name} WINS by ${runsDiff} runs!${reason}` });
+                    saveToHistory(newMatch);
+                } else if (battingTeam.totalRuns > bowlingTeam.totalRuns) {
+                    newMatch.status = MatchStatus.COMPLETED;
+                    newMatch.winningTeamId = battingTeam.id;
+                    newMatch.manOfTheMatchId = determineManOfTheMatch(newMatch);
+                    const wicketsRemaining = Math.max(0, wicketsLimit - currentWickets);
+                    setAnimEvent({ type: 'WIN', message: `${battingTeam.name} WINS by ${wicketsRemaining} wicket${wicketsRemaining === 1 ? '' : 's'}!` });
                     saveToHistory(newMatch);
                 } else {
                     // TIE DETECTED
@@ -2644,74 +2759,77 @@ const AppInner = () => {
                             </div>
 
                             {/* Modals for Player Selection */}
-                            {!match.currentStrikerId && (
-                                <PlayerSelectModal
-                                    players={match.currentInnings === 1
-                                        ? (match.teamA.isBatting ? match.teamA.players : match.teamB.players)
-                                        : match.currentInnings === 2
-                                            ? (match.teamA.isBatting ? match.teamA.players : match.teamB.players)
-                                            // Super Over Innings (3 = Team A, 4 = Team B)
-                                            : match.currentInnings === 3
-                                                ? match.teamA.players
-                                                : match.teamB.players
-                                    }
-                                    label="Striker"
-                                    onSelect={handleStrikerSelect}
-                                    disabledIds={[match.currentNonStrikerId || '']}
-                                    variant="BATSMAN"
-                                    ignoreStats={match.currentInnings > 2}
-                                />
-                            )}
+                            {(() => {
+                                if (match.status !== MatchStatus.LIVE) return null;
 
-                            {match.currentStrikerId && !match.currentNonStrikerId && (
-                                <PlayerSelectModal
-                                    players={match.currentInnings === 1
-                                        ? (match.teamA.isBatting ? match.teamA.players : match.teamB.players)
-                                        : match.currentInnings === 2
-                                            ? (match.teamA.isBatting ? match.teamA.players : match.teamB.players)
-                                            : match.currentInnings === 3
-                                                ? match.teamA.players
-                                                : match.teamB.players
-                                    }
-                                    label="Non-Striker"
-                                    onSelect={handleNonStrikerSelect}
-                                    disabledIds={[match.currentStrikerId || '']}
-                                    variant="BATSMAN"
-                                    ignoreStats={match.currentInnings > 2}
-                                />
-                            )}
+                                const isSuperOver = match.currentInnings > 2;
+                                const battingTeam = match.teamA.isBatting ? match.teamA : match.teamB;
+                                const bowlingTeam = match.teamA.isBatting ? match.teamB : match.teamA;
 
-                            {!match.currentBowlerId && (
-                                <PlayerSelectModal
-                                    players={match.currentInnings === 1
-                                        ? (match.teamA.isBatting ? match.teamB.players : match.teamA.players)
-                                        : match.currentInnings === 2
-                                            ? (match.teamA.isBatting ? match.teamB.players : match.teamA.players)
-                                            : match.currentInnings === 3
-                                                ? match.teamB.players
-                                                : match.teamA.players
-                                    }
-                                    label={
-                                        // For Super Over, always show 'Bowler', otherwise check over count
-                                        (match.currentInnings > 2 ? 0 : (match.teamA.isBatting ? match.teamA.overs : match.teamB.overs)) === 0 ? "Bowler" : "Next Bowler"
-                                    }
-                                    onSelect={handleBowlerSelect}
-                                    disabledIds={
-                                        match.currentInnings > 2
-                                            ? []
-                                            : [
-                                                (() => {
-                                                    if (match.balls.length > 0) {
-                                                        return match.balls[match.balls.length - 1].bowlerId;
-                                                    }
-                                                    return '';
-                                                })()
-                                            ]
-                                    }
-                                    variant="BOWLER"
-                                    ignoreStats={match.currentInnings > 2}
-                                />
-                            )}
+                                const squadSize = battingTeam.players.length;
+                                const maxWickets = Math.max(1, squadSize - 1);
+                                const currentWickets = isSuperOver ? battingTeam.superOverWickets : battingTeam.wickets;
+
+                                // Cricket rule: A side is all out when (squadSize - 1) wickets fall; never prompt for batsman if all out
+                                if (currentWickets >= maxWickets) return null;
+
+                                const availableStrikers = battingTeam.players.filter(p =>
+                                    (isSuperOver ? true : !p.isOut) && p.id !== match.currentNonStrikerId
+                                );
+                                const availableNonStrikers = battingTeam.players.filter(p =>
+                                    (isSuperOver ? true : !p.isOut) && p.id !== match.currentStrikerId
+                                );
+
+                                return (
+                                    <>
+                                        {!match.currentStrikerId && availableStrikers.length > 0 && (
+                                            <PlayerSelectModal
+                                                players={battingTeam.players}
+                                                label="Striker"
+                                                onSelect={handleStrikerSelect}
+                                                disabledIds={[match.currentNonStrikerId || '']}
+                                                variant="BATSMAN"
+                                                ignoreStats={isSuperOver}
+                                            />
+                                        )}
+
+                                        {match.currentStrikerId && !match.currentNonStrikerId && availableNonStrikers.length > 0 && (
+                                            <PlayerSelectModal
+                                                players={battingTeam.players}
+                                                label="Non-Striker"
+                                                onSelect={handleNonStrikerSelect}
+                                                disabledIds={[match.currentStrikerId || '']}
+                                                variant="BATSMAN"
+                                                ignoreStats={isSuperOver}
+                                            />
+                                        )}
+
+                                        {!match.currentBowlerId && (
+                                            <PlayerSelectModal
+                                                players={bowlingTeam.players}
+                                                label={
+                                                    (isSuperOver ? 0 : battingTeam.overs) === 0 ? "Bowler" : "Next Bowler"
+                                                }
+                                                onSelect={handleBowlerSelect}
+                                                disabledIds={
+                                                    isSuperOver
+                                                        ? []
+                                                        : [
+                                                            (() => {
+                                                                if (match.balls.length > 0) {
+                                                                    return match.balls[match.balls.length - 1].bowlerId;
+                                                                }
+                                                                return '';
+                                                            })()
+                                                        ]
+                                                }
+                                                variant="BOWLER"
+                                                ignoreStats={isSuperOver}
+                                            />
+                                        )}
+                                    </>
+                                );
+                            })()}
                         </>
                     )}
 

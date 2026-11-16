@@ -114,8 +114,8 @@ export const LiveScorer: React.FC<ScorerProps> = ({ match, onScoreUpdate, onUndo
       {/* ── Wicket / Dismissal Modal ── */}
       {isWicketModalOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl animate-scale-up overflow-hidden">
-            <div className="bg-highlight px-6 py-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-sm shadow-2xl animate-scale-up overflow-hidden border border-gray-200 dark:border-white/10">
+            <div className="bg-accent px-6 py-4">
               <h3 className="text-xl font-black text-white">How was the dismissal?</h3>
             </div>
             <div className="p-5">
@@ -124,8 +124,8 @@ export const LiveScorer: React.FC<ScorerProps> = ({ match, onScoreUpdate, onUndo
                   <button key={type} onClick={() => setSelectedDismissal(type)}
                     className={`p-3 rounded-xl text-sm font-bold border-2 transition-all ${
                       selectedDismissal === type
-                        ? 'bg-highlight text-white border-highlight shadow-md'
-                        : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
+                        ? 'bg-accent text-white border-accent shadow-md'
+                        : 'bg-white dark:bg-slate-800/60 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-white/10 hover:border-accent hover:bg-accent/15'
                     }`}>
                     {type === DismissalType.CAUGHT ? '🤲 Caught' :
                      type === DismissalType.BOWLED ? '🎳 Bowled' :
@@ -139,9 +139,9 @@ export const LiveScorer: React.FC<ScorerProps> = ({ match, onScoreUpdate, onUndo
               </div>
               <div className="flex gap-3">
                 <button onClick={() => setWicketModalOpen(false)}
-                  className="flex-1 py-3 border-2 border-gray-200 text-gray-600 rounded-xl font-bold hover:bg-gray-50">Cancel</button>
+                  className="flex-1 py-3 border-2 border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 rounded-xl font-bold hover:bg-black/5 dark:hover:bg-white/10 transition-colors">Cancel</button>
                 <button onClick={handleWicketSubmit}
-                  className="flex-1 py-3 bg-highlight text-white rounded-xl font-black shadow-md">
+                  className="flex-1 py-3 bg-accent text-white rounded-xl font-black shadow-md hover:opacity-95 transition-opacity">
                   {selectedDismissal === DismissalType.CAUGHT || selectedDismissal === DismissalType.STUMPED
                     ? 'Next →'
                     : 'Confirm OUT'}
@@ -155,30 +155,30 @@ export const LiveScorer: React.FC<ScorerProps> = ({ match, onScoreUpdate, onUndo
       {/* ── Fielder Picker Modal (Caught / Stumped) ── */}
       {isFielderModalOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl animate-scale-up overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-sm shadow-2xl animate-scale-up overflow-hidden border border-gray-200 dark:border-white/10">
+            <div className="bg-accent px-6 py-4">
               <h3 className="text-lg font-black text-white">
                 {selectedDismissal === DismissalType.CAUGHT ? '🤲 Who took the catch?' : '🧤 Who stumped?'}
               </h3>
-              <p className="text-blue-200 text-xs mt-0.5">Tap the fielder's name</p>
+              <p className="text-white/80 text-xs mt-0.5">Tap the fielder's name</p>
             </div>
             <div className="p-4 max-h-72 overflow-y-auto">
               <div className="grid grid-cols-1 gap-2">
                 {fieldingTeam.players.map(p => (
                   <button key={p.id} onClick={() => handleFielderSelect(p.id)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-gray-100 hover:border-blue-300 hover:bg-blue-50 transition-all text-left">
-                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-                      <User className="w-4 h-4 text-blue-600" />
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 hover:border-accent hover:bg-accent/15 active:bg-accent/25 transition-all text-left group w-full">
+                    <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center shrink-0">
+                      <User className="w-4 h-4 text-accent" />
                     </div>
-                    <span className="font-bold text-gray-800">{p.name}</span>
-                    {p.isCaptain && <span className="ml-auto text-yellow-500 text-xs font-bold">C</span>}
+                    <span className="font-bold text-gray-900 dark:text-white group-hover:text-accent transition-colors">{p.name}</span>
+                    {p.isCaptain && <span className="ml-auto text-amber-500 font-black text-xs px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30">C</span>}
                   </button>
                 ))}
               </div>
             </div>
             <div className="px-4 pb-4">
               <button onClick={() => handleFielderSelect(undefined)}
-                className="w-full py-2.5 border-2 border-gray-200 text-gray-500 rounded-xl font-semibold text-sm hover:bg-gray-50">
+                className="w-full py-2.5 border-2 border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 rounded-xl font-semibold text-sm hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
                 Skip (unknown fielder)
               </button>
             </div>
@@ -189,27 +189,27 @@ export const LiveScorer: React.FC<ScorerProps> = ({ match, onScoreUpdate, onUndo
       {/* ── Extras Modal ── */}
       {extraModalType && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl animate-scale-up overflow-hidden">
-            <div className="bg-yellow-500 px-6 py-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-sm shadow-2xl animate-scale-up overflow-hidden border border-gray-200 dark:border-white/10">
+            <div className="bg-accent px-6 py-4">
               <h3 className="text-xl font-black text-white">
                 {extraModalType === ExtraType.WIDE && "Wide Ball + Runs"}
                 {extraModalType === ExtraType.NO_BALL && "No Ball + Runs"}
                 {extraModalType === ExtraType.BYE && "Byes"}
                 {extraModalType === ExtraType.LEG_BYE && "Leg Byes"}
               </h3>
-              <p className="text-yellow-100 text-xs mt-0.5">Select additional runs scored.</p>
+              <p className="text-white/80 text-xs mt-0.5">Select additional runs scored.</p>
             </div>
             <div className="p-5">
               <div className="grid grid-cols-4 gap-2 mb-5">
                 {[0, 1, 2, 3, 4, 5, 6].map(r => (
                   <button key={r} onClick={() => handleExtraRunSelect(r)}
-                    className="h-12 rounded-xl bg-gray-100 hover:bg-yellow-100 hover:text-yellow-800 text-gray-700 font-black text-lg transition-colors">
+                    className="h-12 rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 hover:border-accent hover:bg-accent/20 text-gray-800 dark:text-white font-black text-lg transition-colors">
                     +{r}
                   </button>
                 ))}
               </div>
               <button onClick={() => setExtraModalType(null)}
-                className="w-full py-3 border-2 border-gray-200 rounded-xl font-bold text-gray-600 hover:bg-gray-50">
+                className="w-full py-3 border-2 border-gray-200 dark:border-white/10 rounded-xl font-bold text-gray-600 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
                 Cancel
               </button>
             </div>
